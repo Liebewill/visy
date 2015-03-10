@@ -49,7 +49,7 @@ add_library(visy_extractors
             src/extractors/KeyPoint3D.cpp
             src/extractors/Extractor.cpp
             src/extractors/Bold3DExtractor.cpp
-            src/extractors/Utils.cpp
+            src/extractors/extrators_utils.cpp
             )
 target_link_libraries (visy_extractors ${PCL_LIBRARIES})
 target_link_libraries (visy_extractors ${OpenCV_LIBS})

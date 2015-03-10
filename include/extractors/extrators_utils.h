@@ -49,8 +49,8 @@ namespace visy {
              * @param radius area radius
              * @param slice slice distance
              */
-            static void extractSliceAreaFromKeypoint3D( KeyPoint3D& kp, cv::Size2i source_size, std::vector<int>& area, float radius, float slice);
-            
+            void extractSliceAreaFromKeypoint3D(KeyPoint3D& kp, cv::Size2i source_size, std::vector<int>& area, float radius, float slice);
+
             /**
              * Extracts a couple of sliced semicircle areas of indices around target KeyPoint3D
              * @param kp target Keypoint
@@ -60,7 +60,22 @@ namespace visy {
              * @param radius full area radius
              * @param slice full area slice distance
              */
-            static void extractSliceAreaPairFromKeypoint3D( KeyPoint3D& kp, cv::Size2i source_size, std::vector<int>& area_left,std::vector<int>& area_right, float radius, float slice);
+            void extractSliceAreaPairFromKeypoint3D(KeyPoint3D& kp, cv::Size2i source_size, std::vector<int>& area_left, std::vector<int>& area_right, float radius, float slice);
+                
+            
+            
+            /**
+             * Draw KeyPoint3Ds with sliced areas
+             * @param out
+             * @param keypoints
+             * @param color
+             * @param tick
+             * @param radius
+             * @param slice
+             */
+            void draw3DKeyPointsWithAreas(cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick, float radius, float slice);
+            
+            
             
         }
 

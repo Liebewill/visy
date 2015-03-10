@@ -16,18 +16,18 @@ namespace visy {
 
         class Bold3DExtractor : public Extractor {
         public:
-            Bold3DExtractor(float zone_radius = -1.0f, float zone_slice = -1.0f);
+            Bold3DExtractor(float zone_radius = 5.0f, float zone_slice = 2.0f,float area_normals_angular_th = 25.0f, float area_max_distance=0.001f);
             Bold3DExtractor(const Bold3DExtractor& orig);
             virtual ~Bold3DExtractor();
 
             virtual void extract(cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<KeyPoint3D>& keypoints, cv::Mat* mask = NULL);
             static void draw3DKeyPointsWithAreas (cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick, float radius, float slice);
         private:
-            float zone_radius;
-            float zone_slice;
+            float area_radius;
+            float area_slice;
+            float area_normals_angular_th;
+            float area_max_distance;
 
-            static void bindArea(KeyPoint3D& kp, cv::Size2i source_size, std::vector<int>& area, float radius, float slice);
-            static void bindAreas(KeyPoint3D& kp, cv::Size2i source_size, std::vector<int>& area_left, std::vector<int>& area_right, float radius, float slice);
 
         };
 

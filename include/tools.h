@@ -80,6 +80,15 @@ namespace visy {
         void planeCoefficients(pcl::PointCloud<PointType>::Ptr cloud,std::vector<int>& indices,pcl::ModelCoefficients::Ptr coefficients, pcl::PointIndices::Ptr inliers,float distance_th =0.01);
         
         /**
+         * Gets Plane Normale Vector of Cloud
+         * @param cloud target Cloud
+         * @param indices filter indices
+         * @param normal_vector OUT normal vector
+         * @param distance_th segmentation distance th
+         */
+        void planeNormalVector(pcl::PointCloud<PointType>::Ptr cloud,std::vector<int>& indices,Eigen::Vector3f& normal_vector,float distance_th =0.01,bool toward_camera =true);
+        
+        /**
          * RGB image from registered CLOUD
          * @param cloud input cloud
          * @param image OUT rgb image

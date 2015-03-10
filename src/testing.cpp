@@ -48,7 +48,7 @@
 #include "Extractor.h"
 #include "Bold3DExtractor.h"
 #include "IrosDataset.h"
-
+#include "extractors/extrators_utils.h"
 
 using namespace std;
 using namespace BoldLib;
@@ -77,7 +77,7 @@ main (int argc, char** argv)
 
   //LOAD MODEL
   visy::dataset::IrosDataset::loadModel(
-          "asus_box", 1,
+          "asus_box", 6,
           model_cloud_full, model_cloud,
           model_rgb, model_rgb_full,
           model_pose);
@@ -96,7 +96,7 @@ main (int argc, char** argv)
   std::cout << "FIND:" << keypoints.size() << std::endl;
 
 
-  visy::extractors::Bold3DExtractor::draw3DKeyPointsWithAreas(out, keypoints, cv::Scalar(255, 0, 0), 1.0f,5.0f,2.0f);
+  visy::extractors::utils::draw3DKeyPointsWithAreas(out, keypoints, cv::Scalar(255, 0, 0), 1.0f,5.0f,2.0f);
 
   pcl::visualization::PCLVisualizer * viewer;
   viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");

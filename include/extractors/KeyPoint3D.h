@@ -38,6 +38,13 @@ namespace visy {
 
         class KeyPoint3D : public cv::KeyPoint {
         public:
+            
+            
+            static const int KEYPOINT3D_TYPE_UNKNOWN = 0;
+            static const int KEYPOINT3D_TYPE_EDGE_SURFACE = 1000;
+            static const int KEYPOINT3D_TYPE_EDGE_TEXTURE = 1001;
+            static const int KEYPOINT3D_TYPE_EDGE_OCCLUSION = 1002;
+            
             KeyPoint3D(cv::Vec4f line, pcl::PointCloud<PointType>::Ptr cloud);
             virtual ~KeyPoint3D();
             static void draw3DKeyPoints(cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick);
@@ -53,7 +60,11 @@ namespace visy {
             cv::Point3f pt3D;
             cv::Point3f pt3D_1;
             cv::Point3f pt3D_2;
-            cv::Point3f direction;
+            cv::Point3f direction_x;
+            cv::Point3f direction_y;
+            cv::Point3f direction_z;
+            
+            int type;
         protected:
 
         };

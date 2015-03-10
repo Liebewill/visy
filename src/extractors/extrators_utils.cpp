@@ -5,7 +5,7 @@
  * Created on 9 marzo 2015, 21.43
  */
 
-#include "Utils.h"
+#include "extrators_utils.h"
 
 namespace visy
 {
@@ -13,7 +13,14 @@ namespace visy
   {
     namespace utils
     {
-
+      /**
+       * 
+       * @param kp
+       * @param source_size
+       * @param area
+       * @param radius
+       * @param slice
+       */
       void
       extractSliceAreaFromKeypoint3D (KeyPoint3D& kp, cv::Size2i source_size, std::vector<int>& area, float radius, float slice)
       {
@@ -44,7 +51,16 @@ namespace visy
           }
         }
       }
-
+      
+      /**
+       * 
+       * @param kp
+       * @param source_size
+       * @param area_left
+       * @param area_right
+       * @param radius
+       * @param slice
+       */
       void
       extractSliceAreaPairFromKeypoint3D (KeyPoint3D& kp, cv::Size2i source_size, std::vector<int>& area_left, std::vector<int>& area_right, float radius, float slice)
       {
@@ -70,6 +86,40 @@ namespace visy
             area_left.push_back(index);
           }
         }
+      }
+      
+      /**
+       * 
+       * @param out
+       * @param keypoints
+       * @param color
+       * @param tick
+       * @param radius
+       * @param slice
+       */
+      void
+      draw3DKeyPointsWithAreas (cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick, float radius, float slice)
+      {
+        KeyPoint3D::draw3DKeyPoints(out, keypoints, color, tick);
+        std::vector<int> area_left, area_right;
+        for (int i = 0; i < keypoints.size(); i++)
+        {
+          area_left.clear();
+          area_right.clear();
+          visy::extractors::KeyPoint3D kp = keypoints[i];
+          extractSliceAreaPairFromKeypoint3D(kp, cv::Size2i(out.cols, out.rows), area_left, area_right, radius, slice);
+
+          for (int area_index = 0; area_index < area_left.size(); area_index++)
+          {
+            cv::circle(out, cv::Point(area_left[area_index] % out.cols, area_left[area_index] / out.cols), 1.0f, cv::Scalar(0, 0, 255));
+          }
+
+          for (int area_index = 0; area_index < area_right.size(); area_index++)
+          {
+            cv::circle(out, cv::Point(area_right[area_index] % out.cols, area_right[area_index] / out.cols), 1.0f, cv::Scalar(0, 255, 0));
+          }
+        }
+
       }
 
     }

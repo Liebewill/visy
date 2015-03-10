@@ -5,6 +5,8 @@
 #include <boldlib.h>
 #include <bold_p.h>
 
+#include "Dataset.h"
+
 
 namespace visy
 {
@@ -90,20 +92,54 @@ namespace visy
       }
     }
 
+    /**
+     * 
+     * @param cloud
+     * @param indices
+     * @param coefficients
+     * @param inliers
+     * @param distance_th
+     */
     void
-    planeCoefficients (pcl::PointCloud<PointType>::Ptr cloud, std::vector<int>& indices, pcl::ModelCoefficients::Ptr coefficients, pcl::PointIndices::Ptr inliers,float distance_th )
+    planeCoefficients (pcl::PointCloud<PointType>::Ptr cloud, std::vector<int>& indices, pcl::ModelCoefficients::Ptr coefficients, pcl::PointIndices::Ptr inliers, float distance_th)
     {
       pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
       seg.setOptimizeCoefficients(true);
       seg.setModelType(pcl::SACMODEL_PLANE);
       seg.setMethodType(pcl::SAC_RANSAC);
       seg.setDistanceThreshold(distance_th);
-      
+
       pcl::PointCloud<PointType>::Ptr sub_cloud(new pcl::PointCloud<PointType>());
       pcl::copyPointCloud(*cloud, indices, *sub_cloud);
-      
+
       seg.setInputCloud(sub_cloud);
       seg.segment(*inliers, *coefficients);
+    }
+
+    /**
+     * 
+     * @param cloud
+     * @param indices
+     * @param normal_vector
+     * @param distance_th
+     */
+    void
+    planeNormalVector (pcl::PointCloud<PointType>::Ptr cloud, std::vector<int>& indices, Eigen::Vector3f& normal_vector, float distance_th, bool toward_camera)
+    {
+      pcl::ModelCoefficients::Ptr coeffcients = pcl::ModelCoefficients::Ptr(new pcl::ModelCoefficients);
+      pcl::PointIndices::Ptr inliers = pcl::PointIndices::Ptr(new pcl::PointIndices);
+      planeCoefficients(cloud, indices, coeffcients, inliers, distance_th);
+
+      normal_vector << coeffcients->values[0], coeffcients->values[1], coeffcients->values[2];
+      if (toward_camera)
+      {
+        Eigen::Vector3f z_axis;
+        z_axis << 0.0f, 0.0f, 1.0f;
+        if (normal_vector.dot(z_axis) >= 0)
+        {
+          normal_vector = -normal_vector;
+        }
+      }
     }
 
     /**
