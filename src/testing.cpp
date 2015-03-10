@@ -49,6 +49,8 @@
 #include "Bold3DExtractor.h"
 #include "IrosDataset.h"
 #include "extractors/extrators_utils.h"
+#include "Descriptor.h"
+#include "Bold3DDescriptorMultiBunch.h"
 
 using namespace std;
 using namespace BoldLib;
@@ -75,9 +77,10 @@ main (int argc, char** argv)
   pcl::PointCloud<PointType>::Ptr model_cloud_full(new pcl::PointCloud<PointType>());
   Eigen::Matrix4f model_pose;
 
+
   //LOAD MODEL
   visy::dataset::IrosDataset::loadModel(
-          "asus_box", 6,
+          "burti", 24,
           model_cloud_full, model_cloud,
           model_rgb, model_rgb_full,
           model_pose);
@@ -86,26 +89,38 @@ main (int argc, char** argv)
   cv::imshow("ciao", model_rgb_full);
   cv::waitKey(0);
 
-  visy::extractors::Extractor* extractor = new visy::extractors::Bold3DExtractor();
+  visy::extractors::Extractor* extractor = new visy::extractors::Bold3DExtractor(false);
 
   std::vector<visy::extractors::KeyPoint3D> keypoints;
-  extractor->extract(model_rgb_full, model_cloud_full, keypoints);
+  extractor->extract(model_rgb, model_cloud_full, keypoints);
+
+
+  std::vector<int> sizes;
+  sizes.push_back(10);
+  sizes.push_back(20);
+  sizes.push_back(30);
+  cv::Mat model_descriptor;
+  visy::descriptors::Descriptor* descriptor = new visy::descriptors::Bold3DDescriptorMultiBunch(12, sizes);
+  descriptor->describe(model_rgb, model_cloud_full, keypoints, model_descriptor);
+
+  cv::namedWindow("test", CV_WINDOW_FREERATIO);
+  cv::imshow("test", model_descriptor);
+  cv::waitKey(0);
+
+
+
 
   cv::Mat out = model_rgb_full.clone();
-
-  std::cout << "FIND:" << keypoints.size() << std::endl;
-
-
-  visy::extractors::utils::draw3DKeyPointsWithAreas(out, keypoints, cv::Scalar(255, 0, 0), 1.0f,5.0f,2.0f);
+  visy::extractors::utils::draw3DKeyPointsWithAreas(out, keypoints, cv::Scalar(255, 0, 0), 1.0f, 5.0f, 2.0f);
 
   pcl::visualization::PCLVisualizer * viewer;
   viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
 
-  
- viewer->addPointCloud(model_cloud_full, "model");
+
+  viewer->addPointCloud(model_cloud_full, "model");
   visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, keypoints, cv::Scalar(0, 255, 0), "ciao");
 
-cv::namedWindow("out",cv::WINDOW_NORMAL);  
+  cv::namedWindow("out", cv::WINDOW_NORMAL);
   cv::imshow("out", out);
 
   while (!viewer->wasStopped())

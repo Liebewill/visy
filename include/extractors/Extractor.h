@@ -38,7 +38,8 @@ namespace visy {
             Extractor(const Extractor& orig);
             virtual ~Extractor();
             virtual void extract(cv::Mat& source,pcl::PointCloud<PointType>::Ptr cloud, std::vector<KeyPoint3D>& keypoints, cv::Mat* mask = NULL) = 0;
-        private:
+        protected:
+            std::string name;
 
         };
     }

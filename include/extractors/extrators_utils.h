@@ -76,6 +76,13 @@ namespace visy {
             void draw3DKeyPointsWithAreas(cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick, float radius, float slice);
             
             
+            /**
+             * Builds a Cloud of primitive points from Keypoint list
+             * @param cloud OUT target cloud
+             * @param keypoints source keypoints
+             */
+            void buildPrimiteCloudFromKeypoints(pcl::PointCloud<PointType>::Ptr cloud,std::vector<visy::extractors::KeyPoint3D>& keypoints);
+            
             
         }
 

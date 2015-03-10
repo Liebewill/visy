@@ -87,6 +87,19 @@ namespace visy {
          * @param distance_th segmentation distance th
          */
         void planeNormalVector(pcl::PointCloud<PointType>::Ptr cloud,std::vector<int>& indices,Eigen::Vector3f& normal_vector,float distance_th =0.01,bool toward_camera =true);
+            
+        
+        /**
+         * Pin value in Bin
+         * @param range Full search range
+         * @param n_bins Number of bins
+         * @param value target value
+         * @param bin_1 OUT index of bin 1
+         * @param bin_2 OUT index of bin 2
+         * @param weight_1 OUT weight in bin 1
+         * @param weight_2 OUT weight in bin 2
+         */
+        void pinBin(float& range, int& n_bins, float& value, int& bin_1, int& bin_2, float& weight_1, float& weight_2);
         
         /**
          * RGB image from registered CLOUD

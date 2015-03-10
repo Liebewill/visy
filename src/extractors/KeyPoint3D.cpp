@@ -35,19 +35,26 @@ namespace visy
       x = cloud->points[point0_3d_index].x;
       y = cloud->points[point0_3d_index].y;
       z = cloud->points[point0_3d_index].z;
-      cv::Point3f p03D = cv::Point3f(x, y, z);
+      cv::Point3f p03D;
+      if (pcl::isFinite(cloud->points[point0_3d_index]))
+        p03D = cv::Point3f(x, y, z);
+      else
+        p03D = cv::Point3f(0, 0, 0);
 
       int point1_3d_index = (int) (p1.x) + (int) (p1.y * cloud->width);
       x = cloud->points[point1_3d_index].x;
       y = cloud->points[point1_3d_index].y;
       z = cloud->points[point1_3d_index].z;
       cv::Point3f p13D = cv::Point3f(x, y, z);
-
+      if (pcl::isFinite(cloud->points[point1_3d_index]))
+        p13D = cv::Point3f(x, y, z);
+      else
+        p13D = cv::Point3f(0, 0, 0);
 
       float nx = (p13D.x + p03D.x) / 2.0f;
       float ny = (p13D.y + p03D.y) / 2.0f;
       float nz = (p13D.z + p03D.z) / 2.0f;
-
+      
       this->pt3D = cv::Point3f(nx, ny, nz);
 
       float dx = (p13D.x - p03D.x);
@@ -143,7 +150,7 @@ namespace visy
         ss << name << "_kp_z" << i;
         visy::tools::draw3DVector(viewer, vstart, vend, 0.0f, 0, 1.0f, ss.str());
 
-        
+
         scale = 1.0f;
         vstart << kp.pt3D.x, kp.pt3D.y, kp.pt3D.z;
         vend << kp.pt3D.x + kp.direction_y.x *scale, kp.pt3D.y + kp.direction_y.y *scale, kp.pt3D.z + kp.direction_y.z *scale;

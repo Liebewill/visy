@@ -13,6 +13,7 @@ namespace visy
   {
     namespace utils
     {
+
       /**
        * 
        * @param kp
@@ -51,7 +52,7 @@ namespace visy
           }
         }
       }
-      
+
       /**
        * 
        * @param kp
@@ -87,7 +88,7 @@ namespace visy
           }
         }
       }
-      
+
       /**
        * 
        * @param out
@@ -122,6 +123,27 @@ namespace visy
 
       }
 
+      /**
+       * 
+       * @param cloud
+       * @param keypoints
+       */
+      void
+      buildPrimiteCloudFromKeypoints (pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints)
+      {
+        for (int i = 0; i < keypoints.size(); i++)
+        {
+          PointType pt;
+
+          pt.x = keypoints[i].pt3D.x;
+          pt.y = keypoints[i].pt3D.y;
+          pt.z = keypoints[i].pt3D.z;
+
+          cloud->points.push_back(pt);
+        }
+      }
+
+      //END
     }
   }
 }

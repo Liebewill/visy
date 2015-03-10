@@ -34,17 +34,18 @@ include_directories (${BOLD_INCLUDE_DIR})     # make sure your .h all inside.
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/extractors 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/descriptors
     ${CMAKE_CURRENT_SOURCE_DIR}/include/detectors 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/dataset 
     ${CMAKE_CURRENT_SOURCE_DIR})
 
-
+#VISY TOOLS
 add_library(visy_tools src/tools.cpp)
 target_link_libraries (visy_tools ${PCL_LIBRARIES})
 target_link_libraries (visy_tools ${OpenCV_LIBS})
 target_link_libraries (visy_tools ${BOLD_LIBRARIES})
 
-
+#VISY EXTRACTORS
 add_library(visy_extractors 
             src/extractors/KeyPoint3D.cpp
             src/extractors/Extractor.cpp
@@ -56,13 +57,23 @@ target_link_libraries (visy_extractors ${OpenCV_LIBS})
 target_link_libraries (visy_extractors ${BOLD_LIBRARIES})
 target_link_libraries (visy_extractors visy_tools)
 
+#VISY DESCRIPTORS
+add_library(visy_descriptors
+            src/descriptors/Histogram1D.cpp
+            src/descriptors/Descriptor.cpp
+            src/descriptors/Bold3DDescriptorMultiBunch.cpp
+            )
 
+
+#VISY DATASET
 add_library(visy_dataset 
     src/dataset/Dataset.cpp
     src/dataset/IrosDataset.cpp
 )
 
+############ EXECUTABLES #########################
 
+#VISY TESTING
 add_executable(visy_testing src/testing.cpp)
 target_link_libraries(
     visy_testing 
@@ -71,6 +82,7 @@ target_link_libraries(
     ${OpenCV_LIBS} 
     visy_tools 
     visy_extractors
+    visy_descriptors
     visy_dataset
 )
 

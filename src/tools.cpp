@@ -143,6 +143,38 @@ namespace visy
     }
 
     /**
+     * 
+     * @param range
+     * @param n_bins
+     * @param value
+     * @param bin_1
+     * @param bin_2
+     * @param weight_1
+     * @param weight_2
+     */
+    void
+    pinBin (float& range, int& n_bins, float& value, int& bin_1, int& bin_2, float& weight_1, float& weight_2)
+    {
+
+      float bin_size = range / n_bins;
+      int bin_temp = floor(value / bin_size);
+      float bin_middle = bin_temp * bin_size + bin_size / 2.0f;
+      float alpha = (value - bin_middle) / (bin_size);
+      int delta = alpha > 0 ? 1 : -1;
+      
+      alpha = alpha < 0 ? -alpha:alpha;
+      
+      bin_1 = (bin_temp)%(n_bins);
+      bin_1 = bin_1 < 0 ? n_bins - 1 : bin_1;
+            
+      bin_2 = (bin_1+delta)%(n_bins) ;
+      bin_2 = bin_2 < 0 ? n_bins - 1 : bin_2;
+      
+      weight_1 = 1.0f-alpha;
+      weight_2 = 1.0f-weight_1;
+    }
+
+    /**
      * Retrieves RGB image from CLOUD
      * @param cloud [INPUT] source cloud
      * @param image [OUTPUT] image

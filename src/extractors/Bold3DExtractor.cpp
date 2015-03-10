@@ -14,10 +14,13 @@ namespace visy
   namespace extractors
   {
 
-    Bold3DExtractor::Bold3DExtractor (float zone_radius, float zone_slice) : Extractor ()
+    Bold3DExtractor::Bold3DExtractor (bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance) : Extractor ()
     {
+      this->filter_occlusion = filter_occlusion;
       this->area_radius = zone_radius;
       this->area_slice = zone_slice;
+      this->area_normals_angular_th = area_normals_angular_th;
+      this->area_max_distance = area_max_distance;
     }
 
     Bold3DExtractor::Bold3DExtractor (const Bold3DExtractor& orig)
@@ -36,7 +39,7 @@ namespace visy
       std::vector<cv::Vec4f> lines;
       visy::tools::edgeDetection(source, lines, visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_LSD);
 
-      keypoints.clear();
+      std::vector<KeyPoint3D> keypoints_temp;
 
       float x, y;
       std::vector<int> area_left, area_right;
@@ -93,7 +96,7 @@ namespace visy
           pcl::compute3DCentroid(*cloud_right, centroid_right);
 
           Eigen::Vector4f centroid_distance = centroid_left - centroid_right;
-          
+
 
           cv::Point3f direction_left, direction_right, direction;
           direction_right.x = centroid_right[0] - kp.pt3D.x;
@@ -103,30 +106,43 @@ namespace visy
           direction_left.x = centroid_left[0] - kp.pt3D.x;
           direction_left.y = centroid_left[1] - kp.pt3D.y;
           direction_left.z = centroid_left[2] - kp.pt3D.z;
-
-          if (direction_right.dot(direction_right) < direction_left.dot(direction_left))
+          
+          float step = 0.0f;
+          if (direction_right.dot(direction_right) > direction_left.dot(direction_left))
           {
-            direction = direction_right;
+            direction = direction_left;
+            step = direction_right.dot(direction_right);
           }
           else
           {
-            direction = direction_left;
-          } 
-          
-          float step = direction.dot(direction);
-          step = step <0 ? -step:step;
-
-          if(step> this->area_max_distance || isnan(step)){
+            direction = direction_right;
+            step = direction_left.dot(direction_left);
+          }
+          step = step < 0 ? -step : step;
+          if (step> this->area_max_distance || isnan(step))
+          {
             kp.type = KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION;
           }
-          
+
           kp.direction_y = direction;
-          
+
 
         }
-        keypoints.push_back(kp);
+        keypoints_temp.push_back(kp);
       }
 
+      if (filter_occlusion)
+      {
+        for (int i = 0; i < keypoints_temp.size(); i++)
+        {
+          if (keypoints_temp[i].type == KeyPoint3D::KEYPOINT3D_TYPE_EDGE_SURFACE || keypoints_temp[i].type == KeyPoint3D::KEYPOINT3D_TYPE_EDGE_TEXTURE)
+            keypoints.push_back(keypoints_temp[i]);
+        }
+      }
+      else
+      {
+        keypoints.insert(keypoints.end(), keypoints_temp.begin(), keypoints_temp.end());
+      }
 
 
     }
