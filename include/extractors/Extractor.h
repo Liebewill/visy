@@ -31,13 +31,16 @@
 
 namespace visy {
     namespace extractors {
-
+        
         class Extractor {
         public:
+            
             Extractor();
             Extractor(const Extractor& orig);
             virtual ~Extractor();
             virtual void extract(cv::Mat& source,pcl::PointCloud<PointType>::Ptr cloud, std::vector<KeyPoint3D>& keypoints, cv::Mat* mask = NULL) = 0;
+            std::string buildName() ;
+            virtual  std::string buildNameImpl() = 0;
         protected:
             std::string name;
 

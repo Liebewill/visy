@@ -8,15 +8,18 @@
 #ifndef DATASET_H
 #define	DATASET_H
 
-class Dataset {
-public:
-    Dataset();
-    Dataset(const Dataset& orig);
-    virtual ~Dataset();
-    
-private:
+namespace visy {
+    namespace dataset {
 
-};
+        class Dataset {
+        public:
+            Dataset();
+            virtual ~Dataset();
 
+        private:
+
+        };
+    }
+}
 #endif	/* DATASET_H */
 

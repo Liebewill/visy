@@ -32,6 +32,7 @@
 #include <pcl/common/centroid.h>
 
 #include "tools.h"
+#include "commons.h"
 
 namespace visy {
     namespace extractors {

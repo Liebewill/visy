@@ -25,6 +25,7 @@ namespace visy
 
     Histogram1D::~Histogram1D ()
     {
+      delete[] this->data;
     }
 
     void

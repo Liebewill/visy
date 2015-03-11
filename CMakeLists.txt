@@ -62,7 +62,26 @@ add_library(visy_descriptors
             src/descriptors/Histogram1D.cpp
             src/descriptors/Descriptor.cpp
             src/descriptors/Bold3DDescriptorMultiBunch.cpp
+            src/descriptors/Bold3DDescriptorRadiusBunch.cpp
             )
+target_link_libraries (visy_descriptors ${PCL_LIBRARIES})
+target_link_libraries (visy_descriptors ${OpenCV_LIBS})
+target_link_libraries (visy_descriptors ${BOLD_LIBRARIES})
+target_link_libraries (visy_descriptors visy_tools)
+
+#VISY DETECTORS
+add_library(visy_detectors
+            src/detectors/Detector.cpp
+            src/detectors/Bold3DMDetector.cpp
+            src/detectors/Bold3DRDetector.cpp
+            )
+target_link_libraries (visy_detectors ${PCL_LIBRARIES})
+target_link_libraries (visy_detectors ${OpenCV_LIBS})
+target_link_libraries (visy_detectors ${BOLD_LIBRARIES})
+target_link_libraries (visy_detectors visy_tools)
+target_link_libraries (visy_detectors visy_extractors)
+target_link_libraries (visy_detectors visy_descriptors)
+
 
 
 #VISY DATASET
@@ -83,6 +102,7 @@ target_link_libraries(
     visy_tools 
     visy_extractors
     visy_descriptors
+    visy_detectors
     visy_dataset
 )
 

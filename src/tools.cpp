@@ -1,4 +1,7 @@
 
+#include <opencv2/features2d/features2d.hpp>
+
+
 #include <tools.h>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -161,17 +164,57 @@ namespace visy
       float bin_middle = bin_temp * bin_size + bin_size / 2.0f;
       float alpha = (value - bin_middle) / (bin_size);
       int delta = alpha > 0 ? 1 : -1;
-      
-      alpha = alpha < 0 ? -alpha:alpha;
-      
-      bin_1 = (bin_temp)%(n_bins);
+
+      alpha = alpha < 0 ? -alpha : alpha;
+
+      bin_1 = (bin_temp) % (n_bins);
       bin_1 = bin_1 < 0 ? n_bins - 1 : bin_1;
-            
-      bin_2 = (bin_1+delta)%(n_bins) ;
+
+      bin_2 = (bin_1 + delta) % (n_bins);
       bin_2 = bin_2 < 0 ? n_bins - 1 : bin_2;
-      
-      weight_1 = 1.0f-alpha;
-      weight_2 = 1.0f-weight_1;
+
+      weight_1 = 1.0f - alpha;
+      weight_2 = 1.0f - weight_1;
+    }
+
+    /**
+     */
+    void
+    matchKeypointsBrute (std::vector<cv::DMatch>& matches, std::vector<cv::DMatch>& good_matches, cv::Mat& model_descriptor, cv::Mat& scene_descriptor, int match_type)
+    {
+      /* Keypoints Matching */
+      matches.clear();
+      good_matches.clear();
+
+      cv::BruteForceMatcher<cv::L2<float> > matcher;
+      matcher.match(scene_descriptor, model_descriptor, matches);
+
+      float max_dist = 0;
+      float min_dist = 100000;
+
+      for (int i = 0; i < scene_descriptor.rows; i++)
+      {
+        double dist = matches[i].distance;
+        if (dist < min_dist) min_dist = dist;
+        if (dist > max_dist) max_dist = dist;
+      }
+
+      if (match_type == VISY_TOOLS_MATCHING_RATIO)
+      {
+        for (int i = 0; i < scene_descriptor.rows; i++)
+        {
+          if (matches[i].distance <= std::max(2.0f * min_dist, 0.02f))
+          {
+            good_matches.push_back(matches[i]);
+          }
+        }
+      }
+      else if (match_type == VISY_TOOLS_MATCHING_FULL)
+      {
+        good_matches.insert(good_matches.end(), matches.begin(), matches.end());
+      }
+
+
     }
 
     /**
@@ -180,7 +223,7 @@ namespace visy
      * @param image [OUTPUT] image
      */
     void
-    rgbFromCloud (pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cv::Mat& image)
+    rgbFromCloud (pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cv::Mat & image)
     {
       //            image.create(cloud->height, cloud->width, CV_8UC3);
       image = cv::Mat::zeros(cloud->height, cloud->width, CV_8UC3);
@@ -401,7 +444,7 @@ namespace visy
      * @return
      */
     Eigen::Matrix4f
-    invertTransformationMatrix (Eigen::Matrix4f& t)
+    invertTransformationMatrix (Eigen::Matrix4f & t)
     {
       Eigen::Matrix3f R = t.block<3, 3>(0, 0);
       Eigen::Vector3f translation = t.block<3, 1>(0, 3);
@@ -450,7 +493,7 @@ namespace visy
     }
 
     void
-    transformVector (Eigen::Vector3f& vin, Eigen::Vector3f& vout, Eigen::Matrix4f& transform)
+    transformVector (Eigen::Vector3f& vin, Eigen::Vector3f& vout, Eigen::Matrix4f & transform)
     {
       Eigen::Vector4f pt;
       pt <<

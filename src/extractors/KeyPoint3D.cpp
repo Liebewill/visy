@@ -54,7 +54,7 @@ namespace visy
       float nx = (p13D.x + p03D.x) / 2.0f;
       float ny = (p13D.y + p03D.y) / 2.0f;
       float nz = (p13D.z + p03D.z) / 2.0f;
-      
+
       this->pt3D = cv::Point3f(nx, ny, nz);
 
       float dx = (p13D.x - p03D.x);

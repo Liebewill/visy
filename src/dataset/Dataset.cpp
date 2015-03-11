@@ -6,16 +6,18 @@
  */
 
 #include "Dataset.h"
-
-Dataset::Dataset ()
+namespace visy
 {
-}
+  namespace dataset
+  {
 
-Dataset::Dataset (const Dataset& orig)
-{
-}
+    Dataset::Dataset ()
+    {
+    }
 
-Dataset::~Dataset ()
-{
-}
+    Dataset::~Dataset ()
+    {
+    }
 
+  }
+}

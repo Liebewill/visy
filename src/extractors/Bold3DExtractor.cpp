@@ -14,7 +14,7 @@ namespace visy
   namespace extractors
   {
 
-    Bold3DExtractor::Bold3DExtractor (bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance) : Extractor ()
+    Bold3DExtractor::Bold3DExtractor (bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance) : Extractor () 
     {
       this->filter_occlusion = filter_occlusion;
       this->area_radius = zone_radius;
@@ -106,7 +106,7 @@ namespace visy
           direction_left.x = centroid_left[0] - kp.pt3D.x;
           direction_left.y = centroid_left[1] - kp.pt3D.y;
           direction_left.z = centroid_left[2] - kp.pt3D.z;
-          
+
           float step = 0.0f;
           if (direction_right.dot(direction_right) > direction_left.dot(direction_left))
           {
@@ -171,6 +171,19 @@ namespace visy
 
       }
 
+    }
+
+    std::string
+    Bold3DExtractor::buildNameImpl ()
+    {
+      std::stringstream ss;
+      ss << "BOLD3D;";
+      ss << this->filter_occlusion << ";";
+      ss << this->area_radius << ";";
+      ss << this->area_slice << ";";
+      ss << this->area_normals_angular_th << ";";
+      ss << this->area_max_distance;
+      return ss.str();
     }
 
   }

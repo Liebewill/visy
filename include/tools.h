@@ -37,13 +37,8 @@
 #include <pcl/io/ply_io.h>
 
 #include "lsd.h"
-
-typedef pcl::PointXYZRGBA PointType;
-typedef pcl::Normal NormalType;
-typedef pcl::ReferenceFrame RFType;
-typedef pcl::SHOT352 DescriptorType;
-typedef pcl::Label LabelType;
-
+#include "commons.h"
+#include "extractors/KeyPoint3D.h"
 
 namespace visy {
     namespace tools {
@@ -100,6 +95,24 @@ namespace visy {
          * @param weight_2 OUT weight in bin 2
          */
         void pinBin(float& range, int& n_bins, float& value, int& bin_1, int& bin_2, float& weight_1, float& weight_2);
+        
+        
+        const int VISY_TOOLS_MATCHING_FULL = 100;
+        const int VISY_TOOLS_MATCHING_RATIO = 101;
+        
+        /**
+         * Match of descriptors
+         * @param matches Full matches
+         * @param good_matches Filtered matches
+         * @param model_descriptor Model Descriptor Mat
+         * @param scene_descriptor Scene Descriptor Mat
+         * @param match_type Filtering type
+         */
+        void matchKeypointsBrute(std::vector<cv::DMatch>& matches, std::vector<cv::DMatch>& good_matches, cv::Mat& model_descriptor, cv::Mat& scene_descriptor, int match_type=VISY_TOOLS_MATCHING_FULL);
+        
+        
+       
+        
         
         /**
          * RGB image from registered CLOUD

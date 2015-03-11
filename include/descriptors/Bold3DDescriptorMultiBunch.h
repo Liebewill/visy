@@ -21,6 +21,7 @@ namespace visy {
             virtual ~Bold3DDescriptorMultiBunch();
             virtual void describe(cv::Mat& source,pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor);
             virtual void pairKeyPoint3D(visy::extractors::KeyPoint3D& kp1, visy::extractors::KeyPoint3D& kp2, float** results);
+            virtual std::string buildNameImpl();
         protected:
             std::vector<int> sizes;
             int n_bins;

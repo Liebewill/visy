@@ -22,6 +22,7 @@ namespace visy {
 
             virtual void extract(cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<KeyPoint3D>& keypoints, cv::Mat* mask = NULL);
             static void draw3DKeyPointsWithAreas (cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick, float radius, float slice);
+             virtual  std::string buildNameImpl();
         private:
             bool filter_occlusion;
             float area_radius;

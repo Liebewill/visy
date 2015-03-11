@@ -1,33 +1,30 @@
 /* 
- * File:   Bold3DDescriptor.cpp
+ * File:   Bold3DDescriptorRadiusBunch.cpp
  * Author: daniele
  * 
- * Created on 10 marzo 2015, 18.47
+ * Created on 11 marzo 2015, 16.21
  */
 
-#include <vector>
-
-#include "Bold3DDescriptorMultiBunch.h"
-
+#include "Bold3DDescriptorRadiusBunch.h"
 
 namespace visy
 {
   namespace descriptors
   {
 
-    Bold3DDescriptorMultiBunch::Bold3DDescriptorMultiBunch (int n_bins, std::vector<int>& sizes) : Descriptor()
+    Bold3DDescriptorRadiusBunch::Bold3DDescriptorRadiusBunch (int n_bins, std::vector<float>& radiuses) : Descriptor()
     {
       this->n_bins = n_bins;
       this->size = n_bins * 3;
-      this->sizes.insert(this->sizes.end(), sizes.begin(), sizes.end());
+      this->radiuses.insert(this->radiuses.end(), radiuses.begin(), radiuses.end());
     }
 
-    Bold3DDescriptorMultiBunch::~Bold3DDescriptorMultiBunch ()
+    Bold3DDescriptorRadiusBunch::~Bold3DDescriptorRadiusBunch ()
     {
     }
 
     void
-    Bold3DDescriptorMultiBunch::pairKeyPoint3D (visy::extractors::KeyPoint3D& kp1, visy::extractors::KeyPoint3D& kp2, float** results)
+    Bold3DDescriptorRadiusBunch::pairKeyPoint3D (visy::extractors::KeyPoint3D& kp1, visy::extractors::KeyPoint3D& kp2, float** results)
     {
       float* v = new float[3];
 
@@ -57,10 +54,10 @@ namespace visy
     }
 
     void
-    Bold3DDescriptorMultiBunch::describe (cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor)
+    Bold3DDescriptorRadiusBunch::describe (cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor)
     {
       //DESCRIPTOR INIT
-      int full_size = keypoints.size() * this->sizes.size();
+      int full_size = keypoints.size() * this->radiuses.size();
       descriptor = cv::Mat::zeros(full_size, this->size, CV_32F);
 
 
@@ -78,9 +75,9 @@ namespace visy
       PointType searchPoint;
 
 
-      for (int j = 0; j < this->sizes.size(); j++)
+      for (int j = 0; j < this->radiuses.size(); j++)
       {
-        int s = this->sizes[j] + 1;
+        float radius = this->radiuses[j];
 
         for (int i = 0; i < keypoints.size(); i++)
         {
@@ -91,7 +88,7 @@ namespace visy
 
           found_indices.clear();
           indices_distances.clear();
-          kdtree.nearestKSearch(searchPoint, s, found_indices, indices_distances);
+          kdtree.radiusSearch(searchPoint, radius, found_indices, indices_distances);
 
 
           Histogram1D h0(180.0f, this->n_bins);
@@ -123,17 +120,17 @@ namespace visy
     }
 
     std::string
-    Bold3DDescriptorMultiBunch::buildNameImpl ()
+    Bold3DDescriptorRadiusBunch::buildNameImpl ()
     {
       std::stringstream ss;
-      ss << "BOLD3D-MULTIBUNCH;";
+      ss << "BOLD3D-RADIUSBUNCH;";
       ss << this->n_bins << ";";
 
       ss << "(";
-      for (int i = 0; i < this->sizes.size(); i++)
+      for (int i = 0; i < this->radiuses.size(); i++)
       {
-        ss << this->sizes[i];
-        if (i < this->sizes.size() - 1)
+        ss << this->radiuses[i];
+        if (i < this->radiuses.size() - 1)
         {
           ss << ",";
         }

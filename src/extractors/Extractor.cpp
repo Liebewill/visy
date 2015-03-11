@@ -16,12 +16,16 @@ namespace visy
     {
     }
 
-    Extractor::Extractor (const Extractor& orig)
+    Extractor::~Extractor ()
     {
     }
 
-    Extractor::~Extractor ()
+    std::string
+    Extractor::buildName ()
     {
+      std::stringstream ss;
+      ss << "EXTRACTOR_" << this->buildNameImpl();
+      return ss.str();
     }
 
   }

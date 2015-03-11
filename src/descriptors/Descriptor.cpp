@@ -20,5 +20,14 @@ namespace visy
     {
     }
 
+    std::string
+    Descriptor::buildName ()
+    {
+      std::stringstream ss;
+      ss << "DESCRIPTOR_" << this->buildNameImpl();
+      return ss.str();
+    }
+
+
   }
 }

@@ -6,6 +6,7 @@
  */
 
 #include "extrators_utils.h"
+#include "Bold3DExtractor.h"
 
 namespace visy
 {
@@ -143,6 +144,113 @@ namespace visy
         }
       }
 
+      /**
+       * 
+       * @param model_keypoints
+       * @param scene_keypoints
+       * @param matches
+       * @param matched_model_keypoints
+       * @param matched_scene_keypoints
+       * @param matched_model_keypoints_indices
+       * @param matched_scene_keypoints_indices
+       * @param model_scene_corrs
+       */
+      void
+      keypointsConsensusSet (
+              std::vector<visy::extractors::KeyPoint3D >& model_keypoints,
+              std::vector<visy::extractors::KeyPoint3D >& scene_keypoints,
+              std::vector<cv::DMatch>& matches,
+              std::vector<visy::extractors::KeyPoint3D>& matched_model_keypoints,
+              std::vector<visy::extractors::KeyPoint3D>& matched_scene_keypoints,
+              std::vector<int>& matched_model_keypoints_indices,
+              std::vector<int>& matched_scene_keypoints_indices,
+              pcl::CorrespondencesPtr& model_scene_corrs)
+      {
+        /* Good Keyline filtering */
+        matched_model_keypoints.clear();
+        matched_scene_keypoints.clear();
+        matched_model_keypoints_indices.clear();
+        matched_scene_keypoints_indices.clear();
+        model_scene_corrs = pcl::CorrespondencesPtr(new pcl::Correspondences());
+
+        for (int i = 0; i < matches.size(); i++)
+        {
+          matched_model_keypoints.push_back(model_keypoints[matches[i].trainIdx]);
+          matched_scene_keypoints.push_back(scene_keypoints[matches[i].queryIdx]);
+          matched_model_keypoints_indices.push_back(matches[i].trainIdx);
+          matched_scene_keypoints_indices.push_back(matches[i].queryIdx);
+
+          //        pcl::Correspondence corr(good_matches[i].trainIdx,good_matches[i].queryIdx,good_matches[i].distance);
+          pcl::Correspondence corr(i, i, matches[i].distance);
+          model_scene_corrs->push_back(corr);
+        }
+
+      }
+
+      /**
+       * 
+       * @param gc_size
+       * @param gc_th
+       * @param model_keypoints
+       * @param scene_keypoints
+       * @param model_scene_corrs
+       * @param rototranslations
+       * @param clustered_corrs
+       */
+      void
+      keypointsGeometricConsistencyGrouping (double gc_size, int gc_th,
+              std::vector<visy::extractors::KeyPoint3D>& model_keypoints,
+              std::vector<visy::extractors::KeyPoint3D>& scene_keypoints,
+              pcl::CorrespondencesPtr& model_scene_corrs,
+              std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
+              std::vector < pcl::Correspondences >& clustered_corrs)
+      {
+        pcl::PointCloud<PointType>::Ptr model_keypoints_cloud(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<PointType>::Ptr scene_keypoints_cloud(new pcl::PointCloud<PointType>());
+        buildPrimiteCloudFromKeypoints(model_keypoints_cloud, model_keypoints);
+        buildPrimiteCloudFromKeypoints(scene_keypoints_cloud, scene_keypoints);
+
+        std::cout << "Model Cloud::" << model_keypoints_cloud->points.size() << std::endl;
+        std::cout << "Scene Cloud::" << scene_keypoints_cloud->points.size() << std::endl;
+        std::cout << "XX Cloud::" << model_scene_corrs->size() << std::endl;
+
+        pcl::GeometricConsistencyGrouping<PointType, PointType> gc_clusterer;
+        gc_clusterer.setGCSize(gc_size);
+        gc_clusterer.setGCThreshold(gc_th);
+
+        gc_clusterer.setInputCloud(model_keypoints_cloud);
+        gc_clusterer.setSceneCloud(scene_keypoints_cloud);
+        gc_clusterer.setModelSceneCorrespondences(model_scene_corrs);
+
+        rototranslations.clear();
+        clustered_corrs.clear();
+
+        std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > temp_rototranslations;
+        gc_clusterer.recognize(temp_rototranslations);
+        std::cout << "TEMP:" << temp_rototranslations.size() << std::endl;
+        for (int i = 0; i < temp_rototranslations.size(); i++)
+        {
+          if (temp_rototranslations[i].block<3, 1>(0, 3).norm() > 0.000001f)
+          {
+            rototranslations.push_back(temp_rototranslations[i]);
+          }
+        }
+
+      }
+
+      /**
+       * 
+       * @param source
+       * @param out
+       * @param times
+       */
+      void
+      replicateKeypoints (std::vector<KeyPoint3D>& source, std::vector<KeyPoint3D>& out, int times)
+      {
+        for(int i = 0; i < times; i++){
+          out.insert(out.end(),source.begin(),source.end());
+        }
+      }
       //END
     }
   }
