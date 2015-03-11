@@ -55,6 +55,7 @@
 #include "Detector.h"
 #include "Bold3DMDetector.h"
 #include "Bold3DRDetector.h"
+#include "BoldDetector.h"
 
 using namespace std;
 using namespace BoldLib;
@@ -78,7 +79,7 @@ main (int argc, char** argv)
 
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
-  for (int sce = 1; sce < 15; sce++)
+  for (int sce = 10; sce < 15; sce++)
   {
     cv::Mat model_rgb, model_rgb_full;
     pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
@@ -127,8 +128,9 @@ main (int argc, char** argv)
     cv::Mat model_descriptor;
     cv::Mat scene_descriptor;
 
-    //  visy::detectors::Detector * detector = new visy::detectors::Bold3DMDetector(sizes);
-    visy::detectors::Detector * detector = new visy::detectors::Bold3DRDetector(radiuses);
+//      visy::detectors::Detector * detector = new visy::detectors::Bold3DMDetector(sizes,8,true);
+    visy::detectors::Detector * detector = new visy::detectors::Bold3DRDetector(radiuses,8);
+//    visy::detectors::Detector * detector = new visy::detectors::BoldDetector(sizes);
 
     std::cout << "USING DETECTOR: " << detector->buildName() << std::endl;
 

@@ -74,6 +74,7 @@ add_library(visy_detectors
             src/detectors/Detector.cpp
             src/detectors/Bold3DMDetector.cpp
             src/detectors/Bold3DRDetector.cpp
+            src/detectors/BoldDetector.cpp
             )
 target_link_libraries (visy_detectors ${PCL_LIBRARIES})
 target_link_libraries (visy_detectors ${OpenCV_LIBS})
