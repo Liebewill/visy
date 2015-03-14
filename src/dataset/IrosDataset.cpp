@@ -8,6 +8,7 @@
 #include <pcl-1.7/pcl/common/io.h>
 
 #include "IrosDataset.h"
+#include "Detector.h"
 
 namespace visy
 {
@@ -330,6 +331,35 @@ namespace visy
           poses.push_back(annotations[i].pose);
         }
       }
+    }
+
+    void
+    IrosDataset::fetchFullModel (std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, visy::detectors::Detector* detector)
+    {
+
+      keypoints.clear();
+
+      for (int i = 0; i <= views_max_number; i++)
+      {
+        cv::Mat model_rgb, model_rgb_full;
+        pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<PointType>::Ptr model_cloud_full(new pcl::PointCloud<PointType>());
+        Eigen::Matrix4f model_pose;
+
+        std::vector<visy::extractors::KeyPoint3D> view_keypoints;
+        cv::Mat view_descriptor;
+
+        //LOAD MODEL
+        loadModel(
+                model_name, i,
+                model_cloud_full, model_cloud,
+                model_rgb, model_rgb_full,
+                model_pose);
+
+        detector->detect(model_rgb, model_cloud_full, view_keypoints, view_descriptor);
+        
+      }
+
     }
 
 

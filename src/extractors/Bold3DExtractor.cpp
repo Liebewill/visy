@@ -14,7 +14,7 @@ namespace visy
   namespace extractors
   {
 
-    Bold3DExtractor::Bold3DExtractor (bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance) : Extractor () 
+    Bold3DExtractor::Bold3DExtractor (bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance) : Extractor ()
     {
       this->filter_occlusion = filter_occlusion;
       this->area_radius = zone_radius;
@@ -122,11 +122,10 @@ namespace visy
           if (step> this->area_max_distance || isnan(step))
           {
             kp.type = KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION;
+            kp.direction_y = direction;
+          }else{
+            kp.direction_y = direction_right;
           }
-
-          kp.direction_y = direction;
-
-
         }
         keypoints_temp.push_back(kp);
       }

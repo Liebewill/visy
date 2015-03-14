@@ -47,13 +47,11 @@ namespace visy {
             static const int KEYPOINT3D_TYPE_EDGE_OCCLUSION = 1002;
             
             KeyPoint3D(cv::Vec4f line, pcl::PointCloud<PointType>::Ptr cloud);
+            KeyPoint3D();
             virtual ~KeyPoint3D();
-            static void draw3DKeyPoints(cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick);
+            static void draw3DKeyPoints(cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick,bool force_color = false);
             static void draw3DKeyPointsWithAreas(cv::Mat& out, std::vector<KeyPoint3D>& keypoints, cv::Scalar color, float tick,float radius, float slice);
             static void draw3DKeyPoints3D(pcl::visualization::PCLVisualizer &viewer, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color,std::string name);
-            
-            void bindArea(cv::Size2i source_size,std::vector<int>& area,float radius, float slice);
-            void bindAreas(cv::Size2i source_size,std::vector<int>& area_left,std::vector<int>& area_right,float radius, float slice);
             
             cv::Point2i pt1;
             cv::Point2i pt2;
@@ -66,6 +64,9 @@ namespace visy {
             cv::Point3f direction_z;
             
             int type;
+            
+            KeyPoint3D clone();
+            static void transformKeyPoint3D(KeyPoint3D& in, KeyPoint3D& out,Eigen::Matrix4f& transform);
         protected:
 
         };

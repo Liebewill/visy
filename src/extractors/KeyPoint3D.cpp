@@ -68,6 +68,11 @@ namespace visy
       this->type = KEYPOINT3D_TYPE_UNKNOWN;
     }
 
+    KeyPoint3D::KeyPoint3D ()
+    {
+      this->type = KEYPOINT3D_TYPE_UNKNOWN;
+    }
+
     KeyPoint3D::~KeyPoint3D ()
     {
     }
@@ -80,7 +85,7 @@ namespace visy
      * @param tick
      */
     void
-    KeyPoint3D::draw3DKeyPoints (cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick)
+    KeyPoint3D::draw3DKeyPoints (cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick, bool force_color)
     {
       for (int i = 0; i < keypoints.size(); i++)
       {
@@ -89,17 +94,20 @@ namespace visy
         cv::Point2f p1 = kp.pt - cv::Point2f(cos(kp.angle * M_PI / 180.0f) * kp.size / 2.0f, sin(kp.angle * M_PI / 180.0f) * kp.size / 2.0f);
         cv::Point2f p2 = kp.pt - cv::Point2f(-cos(kp.angle * M_PI / 180.0f) * kp.size / 2.0f, -sin(kp.angle * M_PI / 180.0f) * kp.size / 2.0f);
 
-        if (kp.type == KeyPoint3D::KEYPOINT3D_TYPE_EDGE_TEXTURE)
+        if (!force_color)
         {
-          color = cv::Scalar(0, 0, 255);
-        }
-        else if (kp.type == KeyPoint3D::KEYPOINT3D_TYPE_EDGE_SURFACE)
-        {
-          color = cv::Scalar(0, 255, 0);
-        }
-        else if (kp.type == KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION)
-        {
-          color = cv::Scalar(255, 0, 0);
+          if (kp.type == KeyPoint3D::KEYPOINT3D_TYPE_EDGE_TEXTURE)
+          {
+            color = cv::Scalar(0, 0, 255);
+          }
+          else if (kp.type == KeyPoint3D::KEYPOINT3D_TYPE_EDGE_SURFACE)
+          {
+            color = cv::Scalar(0, 255, 0);
+          }
+          else if (kp.type == KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION)
+          {
+            color = cv::Scalar(255, 0, 0);
+          }
         }
         cv::line(out, p1, p2, color, tick);
         cv::circle(out, keypoints[i].pt, 3.0f, color, tick);
@@ -162,11 +170,32 @@ namespace visy
       }
 
       visy::tools::displayCloud(viewer, keypoint_cloud, color[2], color[1], color[0], 5.0f, name);
-
-
-
-
     }
+
+    KeyPoint3D
+    KeyPoint3D::clone ()
+    {
+
+      KeyPoint3D kp3d;
+      kp3d.angle = this->angle;
+      kp3d.class_id = this->class_id;
+      kp3d.direction_x = this->direction_x;
+      kp3d.direction_y = this->direction_y;
+      kp3d.direction_z = this->direction_z;
+      kp3d.octave = this->octave;
+      kp3d.pt = this->pt;
+      kp3d.pt1 = this->pt1;
+      kp3d.pt2 = this->pt2;
+      kp3d.pt3D = this->pt3D;
+      kp3d.pt3D_1 = this->pt3D_1;
+      kp3d.pt3D_2 = this->pt3D_2;
+      kp3d.response = this->response;
+      kp3d.size = this->size;
+      kp3d.type = this->type;
+
+      return kp3d;
+    }
+
 
   }
 }

@@ -33,17 +33,21 @@ include_directories (${BOLD_INCLUDE_DIR})     # make sure your .h all inside.
 #Custom
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/commons 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/extractors 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/descriptors
     ${CMAKE_CURRENT_SOURCE_DIR}/include/detectors 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/dataset 
     ${CMAKE_CURRENT_SOURCE_DIR})
 
-#VISY TOOLS
-add_library(visy_tools src/tools.cpp)
-target_link_libraries (visy_tools ${PCL_LIBRARIES})
-target_link_libraries (visy_tools ${OpenCV_LIBS})
-target_link_libraries (visy_tools ${BOLD_LIBRARIES})
+#VISY COMMONS
+add_library(visy_commons 
+    src/commons/tools.cpp
+    src/commons/Parameters.cpp
+)
+target_link_libraries (visy_commons ${PCL_LIBRARIES})
+target_link_libraries (visy_commons ${OpenCV_LIBS})
+target_link_libraries (visy_commons ${BOLD_LIBRARIES})
 
 #VISY EXTRACTORS
 add_library(visy_extractors 
@@ -55,19 +59,18 @@ add_library(visy_extractors
 target_link_libraries (visy_extractors ${PCL_LIBRARIES})
 target_link_libraries (visy_extractors ${OpenCV_LIBS})
 target_link_libraries (visy_extractors ${BOLD_LIBRARIES})
-target_link_libraries (visy_extractors visy_tools)
+target_link_libraries (visy_extractors visy_commons)
 
 #VISY DESCRIPTORS
 add_library(visy_descriptors
             src/descriptors/Histogram1D.cpp
             src/descriptors/Descriptor.cpp
             src/descriptors/Bold3DDescriptorMultiBunch.cpp
-            src/descriptors/Bold3DDescriptorRadiusBunch.cpp
             )
 target_link_libraries (visy_descriptors ${PCL_LIBRARIES})
 target_link_libraries (visy_descriptors ${OpenCV_LIBS})
 target_link_libraries (visy_descriptors ${BOLD_LIBRARIES})
-target_link_libraries (visy_descriptors visy_tools)
+target_link_libraries (visy_descriptors visy_commons)
 
 #VISY DETECTORS
 add_library(visy_detectors
@@ -79,7 +82,7 @@ add_library(visy_detectors
 target_link_libraries (visy_detectors ${PCL_LIBRARIES})
 target_link_libraries (visy_detectors ${OpenCV_LIBS})
 target_link_libraries (visy_detectors ${BOLD_LIBRARIES})
-target_link_libraries (visy_detectors visy_tools)
+target_link_libraries (visy_detectors visy_commons)
 target_link_libraries (visy_detectors visy_extractors)
 target_link_libraries (visy_detectors visy_descriptors)
 
@@ -90,6 +93,12 @@ add_library(visy_dataset
     src/dataset/Dataset.cpp
     src/dataset/IrosDataset.cpp
 )
+target_link_libraries (visy_dataset ${PCL_LIBRARIES})
+target_link_libraries (visy_dataset ${OpenCV_LIBS})
+target_link_libraries (visy_dataset ${BOLD_LIBRARIES})
+target_link_libraries (visy_dataset visy_commons)
+target_link_libraries (visy_dataset visy_extractors)
+target_link_libraries (visy_dataset visy_descriptors)
 
 ############ EXECUTABLES #########################
 
@@ -100,7 +109,21 @@ target_link_libraries(
     ${PCL_LIBRARIES} 
     ${BOLD_LIBRARIES} 
     ${OpenCV_LIBS} 
-    visy_tools 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
+
+#KEYPOINT TESTER
+add_executable(keypoint_tester src/keypoint_tester.cpp)
+target_link_libraries(
+    keypoint_tester
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
     visy_extractors
     visy_descriptors
     visy_detectors

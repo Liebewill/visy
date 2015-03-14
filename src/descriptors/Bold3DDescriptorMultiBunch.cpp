@@ -15,11 +15,12 @@ namespace visy
   namespace descriptors
   {
 
-    Bold3DDescriptorMultiBunch::Bold3DDescriptorMultiBunch (int n_bins, std::vector<int>& sizes) : Descriptor()
+    Bold3DDescriptorMultiBunch::Bold3DDescriptorMultiBunch (int n_bins, std::vector<float>& sizes, int bunch_method) : Descriptor ()
     {
       this->n_bins = n_bins;
       this->size = n_bins * 3;
       this->sizes.insert(this->sizes.end(), sizes.begin(), sizes.end());
+      this->bunch_method = bunch_method;
     }
 
     Bold3DDescriptorMultiBunch::~Bold3DDescriptorMultiBunch ()
@@ -80,7 +81,12 @@ namespace visy
 
       for (int j = 0; j < this->sizes.size(); j++)
       {
-        int s = this->sizes[j] + 1;
+        float s = this->sizes[j];
+
+        if (bunch_method == BUNCH_METHOD_KNN)
+        {
+          s += 1.0f;
+        }
 
         for (int i = 0; i < keypoints.size(); i++)
         {
@@ -91,7 +97,14 @@ namespace visy
 
           found_indices.clear();
           indices_distances.clear();
-          kdtree.nearestKSearch(searchPoint, s, found_indices, indices_distances);
+          if (this->bunch_method == BUNCH_METHOD_KNN)
+          {
+            kdtree.nearestKSearch(searchPoint, s, found_indices, indices_distances);
+          }
+          else if (this->bunch_method == BUNCH_METHOD_RADIUS)
+          {
+            kdtree.radiusSearchT(searchPoint, s, found_indices, indices_distances);
+          }
 
 
           Histogram1D h0(180.0f, this->n_bins);
@@ -128,8 +141,11 @@ namespace visy
       std::stringstream ss;
       ss << "BOLD3D-MULTIBUNCH;";
       ss << this->n_bins << ";";
+      ss << this->bunch_method << ";";
 
       ss << "(";
+
+
       for (int i = 0; i < this->sizes.size(); i++)
       {
         ss << this->sizes[i];

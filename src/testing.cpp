@@ -51,7 +51,6 @@
 #include "extractors/extrators_utils.h"
 #include "Descriptor.h"
 #include "Bold3DDescriptorMultiBunch.h"
-#include "Bold3DDescriptorRadiusBunch.h"
 #include "Detector.h"
 #include "Bold3DMDetector.h"
 #include "Bold3DRDetector.h"
@@ -109,7 +108,7 @@ main (int argc, char** argv)
     //          scene_pose);
 
 
-    std::vector<int> sizes;
+    std::vector<float> sizes;
     sizes.push_back(5);
     sizes.push_back(10);
     sizes.push_back(15);
@@ -204,7 +203,7 @@ main (int argc, char** argv)
     /* GEOMETRU CONSISTENCY GROUPING*/
     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
     std::vector < pcl::Correspondences > clustered_corrs;
-    visy::extractors::utils::keypointsGeometricConsistencyGrouping(0.01f, 5,
+    visy::extractors::utils::keypointsGeometricConsistencyGrouping(0.01f, 10,
             matched_model_keypoints,
             matched_scene_keypoints,
             model_scene_corrs,

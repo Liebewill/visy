@@ -35,6 +35,7 @@
 #include <fstream>
 
 #include "tools.h"
+#include "detectors/Detector.h"
 
 namespace visy {
     namespace dataset {
@@ -153,6 +154,7 @@ namespace visy {
             static void loadIndices(std::string path, std::vector<int>& indices);
             static void loadModel(std::string simpleName, int view_number, pcl::PointCloud<PointType>::Ptr full_model, pcl::PointCloud<PointType>::Ptr model, cv::Mat& rgb_model, Eigen::Matrix4f& pose);
             static void loadModel(std::string simpleName, int view_number, pcl::PointCloud<PointType>::Ptr full_model, pcl::PointCloud<PointType>::Ptr model, cv::Mat& rgb_model, cv::Mat& rgb_full_model, Eigen::Matrix4f& pose);
+
             static void loadScene(int set_number, int scene_number, pcl::PointCloud<PointType>::Ptr scene, cv::Mat& rgb_scene);
             static std::string paddedNumber(int number, int length, bool after = false);
             static void loadPoseFromFile(std::string path, Eigen::Matrix4f& pose);
@@ -162,6 +164,8 @@ namespace visy {
             static int checkInstancesNumber(std::string model_name, std::vector<Annotation>& annotations);
             static bool checkHV(std::string model_name, Eigen::Matrix4f pose, std::vector<Annotation>& annotations, float distance_th, float rot_th);
             static bool checkPoses(std::string model_name, std::vector<Eigen::Matrix4f>& poses, std::vector<Annotation>& annotations);
+
+            void fetchFullModel(std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor,visy::detectors::Detector * detector);
         private:
 
         };
