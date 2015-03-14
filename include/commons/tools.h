@@ -132,10 +132,14 @@ namespace visy {
         void display4DHistogram(pcl::visualization::PCLVisualizer& viewer, std::string name, float* histogram, int size, int& viewport);
 
         Eigen::Matrix4f invertTransformationMatrix(Eigen::Matrix4f& t);
+        
+        Eigen::Matrix4f rotationMatrixFromTransformationMatrix(Eigen::Matrix4f& t);
 
         void poseError(Eigen::Matrix4f& pose1, Eigen::Matrix4f& pose2, float& rotation_error, float& distance_error);
-
+        
         void transformVector(Eigen::Vector3f& vin, Eigen::Vector3f& vout, Eigen::Matrix4f& transform);
+
+        void transformVector(cv::Point3f& vin, cv::Point3f& vout, Eigen::Matrix4f& transform);
 
         cv::Scalar avgColor(cv::Mat& source, cv::Point2i center, float radius);
     }

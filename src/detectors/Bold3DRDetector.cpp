@@ -17,7 +17,7 @@ namespace visy
     Bold3DRDetector::Bold3DRDetector (std::vector<float>& radiuses, int n_bins, bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance) : Detector ()
     {
       this->extractor = new visy::extractors::Bold3DExtractor(filter_occlusion, zone_radius, zone_slice, area_normals_angular_th, area_max_distance);
-      this->descriptor = new visy::descriptors::Bold3DDescriptorMultiBunch(n_bins, radiuses,visy::descriptors::Bold3DDescriptorMultiBunch::BUNCH_METHOD_RADIUS);
+      this->descriptor = new visy::descriptors::Bold3DDescriptorMultiBunch(n_bins, radiuses, visy::descriptors::Bold3DDescriptorMultiBunch::BUNCH_METHOD_RADIUS);
       this->multiplication_factor = radiuses.size();
     }
 
@@ -29,6 +29,8 @@ namespace visy
       this->descriptor->describe(source, cloud, temp_keypoints, descriptor);
       visy::extractors::utils::replicateKeypoints(temp_keypoints, keypoints, this->multiplication_factor);
     }
+
+    
 
     Bold3DRDetector::~Bold3DRDetector ()
     {

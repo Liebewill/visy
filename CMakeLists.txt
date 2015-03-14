@@ -99,6 +99,7 @@ target_link_libraries (visy_dataset ${BOLD_LIBRARIES})
 target_link_libraries (visy_dataset visy_commons)
 target_link_libraries (visy_dataset visy_extractors)
 target_link_libraries (visy_dataset visy_descriptors)
+target_link_libraries (visy_dataset visy_detectors)
 
 ############ EXECUTABLES #########################
 

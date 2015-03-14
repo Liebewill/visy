@@ -51,7 +51,7 @@ namespace visy {
             virtual ~KeyPoint3D();
             static void draw3DKeyPoints(cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick,bool force_color = false);
             static void draw3DKeyPointsWithAreas(cv::Mat& out, std::vector<KeyPoint3D>& keypoints, cv::Scalar color, float tick,float radius, float slice);
-            static void draw3DKeyPoints3D(pcl::visualization::PCLVisualizer &viewer, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color,std::string name);
+            static void draw3DKeyPoints3D(pcl::visualization::PCLVisualizer &viewer, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color,std::string name,bool simple = false);
             
             cv::Point2i pt1;
             cv::Point2i pt2;
@@ -67,6 +67,7 @@ namespace visy {
             
             KeyPoint3D clone();
             static void transformKeyPoint3D(KeyPoint3D& in, KeyPoint3D& out,Eigen::Matrix4f& transform);
+            static void transformKeyPoint3Ds(std::vector<KeyPoint3D>& keypoint_in,std::vector<KeyPoint3D>& keypoints_out,Eigen::Matrix4f& transform);
         protected:
 
         };

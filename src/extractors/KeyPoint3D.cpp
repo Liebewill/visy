@@ -122,7 +122,7 @@ namespace visy
      * @param color
      */
     void
-    KeyPoint3D::draw3DKeyPoints3D (pcl::visualization::PCLVisualizer& viewer, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, std::string name)
+    KeyPoint3D::draw3DKeyPoints3D (pcl::visualization::PCLVisualizer& viewer, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, std::string name, bool simple)
     {
 
       pcl::PointCloud<PointType>::Ptr keypoint_cloud(new pcl::PointCloud<PointType>());
@@ -145,27 +145,30 @@ namespace visy
         vstart << kp.pt3D.x - kp.direction_x.x / 2.0f, kp.pt3D.y - kp.direction_x.y / 2.0f, kp.pt3D.z - kp.direction_x.z / 2.0f;
         vend << kp.pt3D.x + kp.direction_x.x / 2.0f, kp.pt3D.y + kp.direction_x.y / 2.0f, kp.pt3D.z + kp.direction_x.z / 2.0f;
 
+
         ss.str("");
         ss << name << "_kp_x" << i;
         visy::tools::draw3DVector(viewer, vstart, vend, 1.0f, 0, 0, ss.str());
 
+        if (!simple)
+        {
+          float scale = 0.01f;
+          vstart << kp.pt3D.x, kp.pt3D.y, kp.pt3D.z;
+          vend << kp.pt3D.x + kp.direction_z.x *scale, kp.pt3D.y + kp.direction_z.y *scale, kp.pt3D.z + kp.direction_z.z *scale;
 
-        float scale = 0.01f;
-        vstart << kp.pt3D.x, kp.pt3D.y, kp.pt3D.z;
-        vend << kp.pt3D.x + kp.direction_z.x *scale, kp.pt3D.y + kp.direction_z.y *scale, kp.pt3D.z + kp.direction_z.z *scale;
-
-        ss.str("");
-        ss << name << "_kp_z" << i;
-        visy::tools::draw3DVector(viewer, vstart, vend, 0.0f, 0, 1.0f, ss.str());
+          ss.str("");
+          ss << name << "_kp_z" << i;
+          visy::tools::draw3DVector(viewer, vstart, vend, 0.0f, 0, 1.0f, ss.str());
 
 
-        scale = 1.0f;
-        vstart << kp.pt3D.x, kp.pt3D.y, kp.pt3D.z;
-        vend << kp.pt3D.x + kp.direction_y.x *scale, kp.pt3D.y + kp.direction_y.y *scale, kp.pt3D.z + kp.direction_y.z *scale;
+          scale = 1.0f;
+          vstart << kp.pt3D.x, kp.pt3D.y, kp.pt3D.z;
+          vend << kp.pt3D.x + kp.direction_y.x *scale, kp.pt3D.y + kp.direction_y.y *scale, kp.pt3D.z + kp.direction_y.z *scale;
 
-        ss.str("");
-        ss << name << "_kp_y" << i;
-        visy::tools::draw3DVector(viewer, vstart, vend, 0.0f, 1.0f, 0.0f, ss.str());
+          ss.str("");
+          ss << name << "_kp_y" << i;
+          visy::tools::draw3DVector(viewer, vstart, vend, 0.0f, 1.0f, 0.0f, ss.str());
+        }
 
       }
 
@@ -195,6 +198,31 @@ namespace visy
 
       return kp3d;
     }
+
+    void
+    KeyPoint3D::transformKeyPoint3D (KeyPoint3D& in, KeyPoint3D& out, Eigen::Matrix4f& transform)
+    {
+      visy::tools::transformVector(in.pt3D, out.pt3D, transform);
+      visy::tools::transformVector(in.pt3D_1, out.pt3D_1, transform);
+      visy::tools::transformVector(in.pt3D_2, out.pt3D_2, transform);
+      Eigen::Matrix4f rotation = visy::tools::rotationMatrixFromTransformationMatrix(transform);
+      visy::tools::transformVector(in.direction_x, out.direction_x, rotation);
+      visy::tools::transformVector(in.direction_y, out.direction_y, rotation);
+      visy::tools::transformVector(in.direction_z, out.direction_z, rotation);
+    }
+
+    void
+    KeyPoint3D::transformKeyPoint3Ds (std::vector<KeyPoint3D>& keypoint_in, std::vector<KeyPoint3D>& keypoints_out, Eigen::Matrix4f& transform)
+    {
+      keypoints_out.clear();
+      for (int i = 0; i < keypoint_in.size(); i++)
+      {
+        KeyPoint3D kp3d = keypoint_in[i].clone();
+        transformKeyPoint3D(keypoint_in[i], kp3d, transform);
+        keypoints_out.push_back(kp3d);
+      }
+    }
+
 
 
   }

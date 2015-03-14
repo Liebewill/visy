@@ -12,11 +12,15 @@ namespace visy
   namespace detectors
   {
 
-    BoldDetector::BoldDetector (std::vector<int>& sizes, int n_bins, int scale_levels, float scale_space_factor) : Detector()
+    BoldDetector::BoldDetector (std::vector<float>& sizes, int n_bins, int scale_levels, float scale_space_factor) : Detector()
     {
       BoldLib::BOLD bold;
-
-      bold.setK(sizes);
+      
+      std::vector<int> isizes;
+      for(int i =0; i < sizes.size(); i++){
+        isizes.push_back(sizes[i]);
+      }
+      bold.setK(isizes);
       bold.setNumAngularBins(n_bins);
       bold.setScaleSpaceLevels(scale_levels);
       bold.setScaleSpaceScaleFactor(scale_space_factor);

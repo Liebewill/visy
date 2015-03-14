@@ -6,6 +6,7 @@
  */
 
 #include <pcl-1.7/pcl/common/io.h>
+#include <pcl-1.7/pcl/common/transforms.h>
 
 #include "IrosDataset.h"
 #include "Detector.h"
@@ -334,10 +335,14 @@ namespace visy
     }
 
     void
-    IrosDataset::fetchFullModel (std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, visy::detectors::Detector* detector)
+    IrosDataset::fetchFullModel (std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, pcl::PointCloud<PointType>::Ptr& cloud, visy::detectors::Detector* detector)
     {
 
-      keypoints.clear();
+      std::vector<visy::extractors::KeyPoint3D> keypoints_temp;
+      cv::Mat descriptor_temp;
+
+      keypoints_temp.clear();
+      Eigen::Matrix4f reference_pose;
 
       for (int i = 0; i <= views_max_number; i++)
       {
@@ -347,6 +352,7 @@ namespace visy
         Eigen::Matrix4f model_pose;
 
         std::vector<visy::extractors::KeyPoint3D> view_keypoints;
+        std::vector<visy::extractors::KeyPoint3D> view_keypoints_rotated;
         cv::Mat view_descriptor;
 
         //LOAD MODEL
@@ -357,8 +363,29 @@ namespace visy
                 model_pose);
 
         detector->detect(model_rgb, model_cloud_full, view_keypoints, view_descriptor);
-        
+
+        if (keypoints_temp.size() == 0)
+        {
+          cloud = model_cloud;
+          reference_pose = visy::tools::invertTransformationMatrix(model_pose);
+          view_keypoints_rotated = view_keypoints;
+          descriptor_temp = view_descriptor;
+        }
+        else
+        {
+          Eigen::Matrix4f inv = reference_pose*model_pose;
+          //          view_keypoints_rotated = view_keypoints;
+          visy::extractors::KeyPoint3D::transformKeyPoint3Ds(view_keypoints, view_keypoints_rotated, inv);
+          cv::vconcat(descriptor_temp, view_descriptor, descriptor_temp);
+          pcl::transformPointCloud(*model_cloud, *model_cloud, inv);
+          cloud->points.insert(cloud->points.end(), model_cloud->points.begin(), model_cloud->points.end());
+        }
+
+        keypoints_temp.insert(keypoints_temp.end(), view_keypoints_rotated.begin(), view_keypoints_rotated.end());
+
       }
+      
+      detector->refineKeyPoints3D(keypoints_temp,descriptor_temp,keypoints,descriptor);
 
     }
 

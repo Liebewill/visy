@@ -37,6 +37,7 @@ namespace visy {
             Detector();
             virtual ~Detector();
             virtual void detect(cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor,cv::Mat* mask = NULL) = 0;
+            virtual void refineKeyPoints3D(std::vector<visy::extractors::KeyPoint3D>& keypoints_in,cv::Mat& descriptor_in, std::vector<visy::extractors::KeyPoint3D>& keypoints_out,cv::Mat& descriptor_out);
             std::string buildName();
             virtual std::string buildNameImpl() = 0;
         protected:

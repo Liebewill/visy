@@ -460,6 +460,23 @@ namespace visy
       return t2;
     }
 
+    Eigen::Matrix4f
+    rotationMatrixFromTransformationMatrix (Eigen::Matrix4f& t)
+    {
+       Eigen::Matrix3f R = t.block<3, 3>(0, 0);
+      Eigen::Vector3f translation;
+      translation<<0.0f,0.0f,0.0f;
+      Eigen::MatrixXf last_block = t.block<1, 4>(3, 0);
+
+      Eigen::MatrixXf Temp(3, 4);
+      Temp << R, translation;
+      Eigen::Matrix4f t2;
+      t2 << Temp, last_block;
+
+      return t2;
+      
+    }
+
     void
     poseError (Eigen::Matrix4f& pose1, Eigen::Matrix4f& pose2, float& rotation_error, float& distance_error)
     {
@@ -492,6 +509,12 @@ namespace visy
 
     }
 
+    /**
+     * Transform Vector3f
+     * @param vin
+     * @param vout
+     * @param transform
+     */
     void
     transformVector (Eigen::Vector3f& vin, Eigen::Vector3f& vout, Eigen::Matrix4f & transform)
     {
@@ -507,6 +530,19 @@ namespace visy
       vout[0] = pt[0];
       vout[1] = pt[1];
       vout[2] = pt[2];
+    }
+
+    void
+    transformVector (cv::Point3f& vin, cv::Point3f& vout, Eigen::Matrix4f& transform)
+    {
+      Eigen::Vector3f evin;
+      Eigen::Vector3f evout;
+
+      evin << vin.x, vin.y, vin.z;
+      transformVector(evin, evout, transform);
+      vout.x = evout[0];
+      vout.y = evout[1];
+      vout.z = evout[2];
     }
   }
 }

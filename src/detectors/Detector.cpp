@@ -25,6 +25,13 @@ namespace visy
     {
     }
 
+    void
+    Detector::refineKeyPoints3D(std::vector<visy::extractors::KeyPoint3D>& keypoints_in,cv::Mat& descriptor_in, std::vector<visy::extractors::KeyPoint3D>& keypoints_out,cv::Mat& descriptor_out)
+    {
+      keypoints_out.insert(keypoints_out.end(), keypoints_in.begin(), keypoints_in.end());
+      descriptor_out = descriptor_in;
+    }
+
     std::string
     Detector::buildName ()
     {
