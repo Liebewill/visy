@@ -23,6 +23,7 @@ namespace visy {
         float getFloat(std::string name);
         int getInt(std::string name);
         bool getBool(std::string name);
+        static std::vector<float> parseFloatArray(std::string s,std::string delimiter = ";");
     private:
         int argc;
         char** argv;

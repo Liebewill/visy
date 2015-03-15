@@ -22,22 +22,23 @@
 
 #include "extractors/KeyPoint3D.h"
 #include "extrators_utils.h"
-#include "Histogram1D.h"
+#include "signatures/Histogram1D.h"
+#include "dfunctions/DFunction.h"
 
 namespace visy {
     namespace descriptors {
 
         class Descriptor {
         public:
-            Descriptor();
+            Descriptor(DFunction* dfunction);
             virtual ~Descriptor();
             virtual void describe(cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor) = 0;
-            virtual void pairKeyPoint3D(visy::extractors::KeyPoint3D& kp1, visy::extractors::KeyPoint3D& kp2, float** results) = 0;
             std::string buildName();
             virtual std::string buildNameImpl() = 0;
         protected:
             std::string name;
             int size;
+            DFunction* dfunction;                    
         };
 
     }

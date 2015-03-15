@@ -5,6 +5,18 @@ cmake_policy(SET CMP0012 NEW)
 
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -g -ftest-coverage -fprofile-arcs")
 
+#OpenMP
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
+#Boost
+find_package(Boost)     
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
 #Eigen
 #include_directories(/usr/include/eigen3/Eigen) 
 
@@ -36,6 +48,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/commons 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/extractors 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/descriptors
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/descriptors/dfunctions
     ${CMAKE_CURRENT_SOURCE_DIR}/include/detectors 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/dataset 
     ${CMAKE_CURRENT_SOURCE_DIR})
@@ -63,9 +76,13 @@ target_link_libraries (visy_extractors visy_commons)
 
 #VISY DESCRIPTORS
 add_library(visy_descriptors
-            src/descriptors/Histogram1D.cpp
+            src/descriptors/signatures/Signature.cpp
+            src/descriptors/signatures/Histogram1D.cpp
             src/descriptors/Descriptor.cpp
             src/descriptors/Bold3DDescriptorMultiBunch.cpp
+            src/descriptors/dfunctions/DFunction.cpp
+            src/descriptors/dfunctions/DFunctionB3DV1.cpp
+            src/descriptors/descriptors_utils.cpp
             )
 target_link_libraries (visy_descriptors ${PCL_LIBRARIES})
 target_link_libraries (visy_descriptors ${OpenCV_LIBS})
@@ -131,6 +148,60 @@ target_link_libraries(
     visy_dataset
 )
 
-#
-#add_executable(bunch_analyzer bunch_analyzer.cpp)
-#target_link_libraries(bunch_analyzer ${OpenCV_LIBS} ${PCL_LIBRARIES} commons)
+#MODEL MAKER
+add_executable(model_maker src/model_maker.cpp)
+target_link_libraries(
+    model_maker
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
+
+#MODEL MAKER ALL
+add_executable(model_maker_all src/model_maker_all.cpp)
+target_link_libraries(
+    model_maker_all
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
+
+#MATCHER
+add_executable(match src/match.cpp)
+target_link_libraries(
+    match
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
+
+#MATCHER
+add_executable(results src/results.cpp)
+target_link_libraries(
+    results
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
+
+

@@ -23,6 +23,13 @@ namespace visy
 
     Detector::~Detector ()
     {
+      if(this->extractor!=NULL){
+        delete this->extractor;
+      }
+      
+      if(this->descriptor!= NULL){
+        delete this->descriptor;
+      }
     }
 
     void

@@ -10,6 +10,7 @@
 
 #include "IrosDataset.h"
 #include "Detector.h"
+#include "Dataset.h"
 
 namespace visy
 {
@@ -22,8 +23,9 @@ namespace visy
     std::vector<Model>* IrosDataset::models = new std::vector<Model>();
     std::vector<SetScene>* IrosDataset::scenes = new std::vector<SetScene>();
 
-    IrosDataset::IrosDataset ()
+    IrosDataset::IrosDataset () : Dataset ()
     {
+      this->name = "IROS-TW";
     }
 
     IrosDataset::~IrosDataset ()
@@ -33,16 +35,18 @@ namespace visy
     void
     IrosDataset::init ()
     {
-      //    IrosDataset::models->push_back(Model("red_mug_white_spots", 79));
       IrosDataset::models->push_back(Model("asus_box", 37));
       IrosDataset::models->push_back(Model("burti", 60));
-      //    IrosDataset::models->push_back(Model("canon_camera_bag", 38));
+      IrosDataset::models->push_back(Model("canon_camera_bag", 38));
       IrosDataset::models->push_back(Model("cisco_phone", 19));
       IrosDataset::models->push_back(Model("coffee_container", 16));
       IrosDataset::models->push_back(Model("felix_ketchup", 20));
       IrosDataset::models->push_back(Model("fruchtmolke", 49));
       IrosDataset::models->push_back(Model("jasmine_green_tea", 41));
+      IrosDataset::models->push_back(Model("muller_milch_banana", 20));
+      IrosDataset::models->push_back(Model("muller_milch_shoko", 19));
       IrosDataset::models->push_back(Model("opencv_book", 12));
+      IrosDataset::models->push_back(Model("red_mug_white_spots", 79));
       IrosDataset::models->push_back(Model("skull", 39));
       IrosDataset::models->push_back(Model("strands_mounting_unit", 56));
       IrosDataset::models->push_back(Model("toilet_paper", 16));
@@ -65,6 +69,19 @@ namespace visy
       IrosDataset::scenes->push_back(SetScene(13, 17));
       IrosDataset::scenes->push_back(SetScene(14, 15));
       IrosDataset::scenes->push_back(SetScene(15, 12));
+    }
+
+    Model
+    IrosDataset::findModelByName (std::string simpleName)
+    {
+      for (int i = 0; i < IrosDataset::models->size(); i++)
+      {
+        if (IrosDataset::models->at(i).name == simpleName)
+        {
+          return IrosDataset::models->at(i);
+        }
+      }
+      return Model("INVALID", 0);
     }
 
     void
@@ -335,14 +352,13 @@ namespace visy
     }
 
     void
-    IrosDataset::fetchFullModel (std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, pcl::PointCloud<PointType>::Ptr& cloud, visy::detectors::Detector* detector)
+    IrosDataset::fetchFullModel (std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, pcl::PointCloud<PointType>::Ptr& cloud,Eigen::Matrix4f& reference_pose, visy::detectors::Detector* detector)
     {
 
       std::vector<visy::extractors::KeyPoint3D> keypoints_temp;
       cv::Mat descriptor_temp;
 
       keypoints_temp.clear();
-      Eigen::Matrix4f reference_pose;
 
       for (int i = 0; i <= views_max_number; i++)
       {
@@ -364,6 +380,8 @@ namespace visy
 
         detector->detect(model_rgb, model_cloud_full, view_keypoints, view_descriptor);
 
+        if (view_keypoints.size() == 0)continue;
+
         if (keypoints_temp.size() == 0)
         {
           cloud = model_cloud;
@@ -384,9 +402,8 @@ namespace visy
         keypoints_temp.insert(keypoints_temp.end(), view_keypoints_rotated.begin(), view_keypoints_rotated.end());
 
       }
-      
-      detector->refineKeyPoints3D(keypoints_temp,descriptor_temp,keypoints,descriptor);
 
+      detector->refineKeyPoints3D(keypoints_temp, descriptor_temp, keypoints, descriptor);
     }
 
 

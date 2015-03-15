@@ -20,6 +20,7 @@ namespace visy {
         
             
         public:
+            static int STATIC_COUNTER;
             Histogram1D(float range,int n_bins);
             virtual ~Histogram1D();
             float* data;

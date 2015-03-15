@@ -85,7 +85,23 @@ namespace visy
     return this->strings[name];
   }
 
+  std::vector<float>
+  Parameters::parseFloatArray (std::string s, std::string delimiter)
+  {
 
+    std::vector<float> array;
+    size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos)
+    {
+      token = s.substr(0, pos);
+      array.push_back(atof(token.c_str()));
+      s.erase(0, pos + delimiter.length());
+    }
+    token = s.substr(0, pos);
+    array.push_back(atof(token.c_str()));
+    return array;
+  }
 
 
 }

@@ -12,12 +12,17 @@ namespace visy
   namespace descriptors
   {
 
-    Descriptor::Descriptor ()
+    Descriptor::Descriptor (DFunction* dfunction)
     {
+      this->dfunction = dfunction;
     }
+    
 
     Descriptor::~Descriptor ()
     {
+      if(this->dfunction!=NULL){
+        delete this->dfunction;
+      }
     }
 
     std::string

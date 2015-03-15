@@ -36,6 +36,7 @@
 
 #include "tools.h"
 #include "detectors/Detector.h"
+#include "Dataset.h"
 
 namespace visy {
     namespace dataset {
@@ -138,7 +139,7 @@ namespace visy {
             }
         };
 
-        class IrosDataset {
+        class IrosDataset : public Dataset {
         public:
 
             static std::string BASE_PATH;
@@ -154,7 +155,9 @@ namespace visy {
             static void loadIndices(std::string path, std::vector<int>& indices);
             static void loadModel(std::string simpleName, int view_number, pcl::PointCloud<PointType>::Ptr full_model, pcl::PointCloud<PointType>::Ptr model, cv::Mat& rgb_model, Eigen::Matrix4f& pose);
             static void loadModel(std::string simpleName, int view_number, pcl::PointCloud<PointType>::Ptr full_model, pcl::PointCloud<PointType>::Ptr model, cv::Mat& rgb_model, cv::Mat& rgb_full_model, Eigen::Matrix4f& pose);
-
+            
+            static Model findModelByName(std::string simpleName);
+            
             static void loadScene(int set_number, int scene_number, pcl::PointCloud<PointType>::Ptr scene, cv::Mat& rgb_scene);
             static std::string paddedNumber(int number, int length, bool after = false);
             static void loadPoseFromFile(std::string path, Eigen::Matrix4f& pose);
@@ -165,7 +168,7 @@ namespace visy {
             static bool checkHV(std::string model_name, Eigen::Matrix4f pose, std::vector<Annotation>& annotations, float distance_th, float rot_th);
             static bool checkPoses(std::string model_name, std::vector<Eigen::Matrix4f>& poses, std::vector<Annotation>& annotations);
 
-            void fetchFullModel(std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, pcl::PointCloud<PointType>::Ptr& cloud, visy::detectors::Detector * detector);
+            void fetchFullModel(std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, pcl::PointCloud<PointType>::Ptr& cloud,Eigen::Matrix4f& reference_pose, visy::detectors::Detector * detector);
         private:
 
         };

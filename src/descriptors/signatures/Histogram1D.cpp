@@ -5,14 +5,15 @@
  * Created on 10 marzo 2015, 21.06
  */
 
-#include "Histogram1D.h"
+#include "signatures/Histogram1D.h"
 #include "tools.h"
 
 
 namespace visy
 {
   namespace descriptors
-  {
+  { 
+    int Histogram1D::STATIC_COUNTER = 0;
 
     Histogram1D::Histogram1D (float range, int n_bins)
     {
@@ -59,6 +60,7 @@ namespace visy
       std::copy(temp, temp + this->n_bins, this->data);
       std::copy(h.data, h.data + h.n_bins, this->data + this->n_bins);
       this->n_bins = this->n_bins + h.n_bins;
+      delete temp;
     }
 
     void
@@ -69,7 +71,12 @@ namespace visy
       {
         if (j < this->n_bins)
         {
-          out.at<float>(row, j) = this->data[j];
+          if(isnan(this->data[j])){
+            out.at<float>(row, j) = 0;
+          }else{
+            out.at<float>(row, j) = this->data[j];
+          }
+          
         }
       }
     }

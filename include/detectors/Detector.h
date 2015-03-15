@@ -40,6 +40,7 @@ namespace visy {
             virtual void refineKeyPoints3D(std::vector<visy::extractors::KeyPoint3D>& keypoints_in,cv::Mat& descriptor_in, std::vector<visy::extractors::KeyPoint3D>& keypoints_out,cv::Mat& descriptor_out);
             std::string buildName();
             virtual std::string buildNameImpl() = 0;
+            
         protected:
             visy::extractors::Extractor * extractor;
             visy::descriptors::Descriptor * descriptor;

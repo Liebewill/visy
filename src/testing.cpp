@@ -75,55 +75,57 @@ int ** reg_img, int * reg_x, int * reg_y );
 int
 main (int argc, char** argv)
 {
-
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
-
-
   std::vector<float> sizes;
   sizes.push_back(15);
   sizes.push_back(25);
   sizes.push_back(30);
+
   visy::detectors::Detector * detector = new visy::detectors::Bold3DMDetector(sizes, 8);
-//  visy::detectors::Detector * detector = new visy::detectors::BoldDetector(sizes);
-
-  visy::dataset::IrosDataset dataset;
-
-  std::vector<visy::extractors::KeyPoint3D> keypoints;
-  cv::Mat descriptor;
-  pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
-  dataset.fetchFullModel("asus_box", 37, keypoints, descriptor,model_cloud, detector);
-
-
-
   pcl::visualization::PCLVisualizer * viewer;
   viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
 
+  visy::dataset::IrosDataset dataset;
 
-  viewer->addPointCloud(model_cloud, "scene");
-    visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, keypoints, cv::Scalar(0, 255, 0), "ciao",true);
 
-  //  for (int i = 0; i < rototranslations.size(); i++)
-  //  {
-  //    pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
-  //    pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
-  //    std::stringstream ss;
-  //    ss << "Instance_" << i << "_cloud";
-  //    visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
-  //  }
-
-//  cv::namedWindow("out", cv::WINDOW_NORMAL);
-//  cv::imshow("out", out);
-//  cv::namedWindow("out_scene", cv::WINDOW_NORMAL);
-//  cv::imshow("out_scene", out_scene);
-
-  while (!viewer->wasStopped())
+  while (true)
   {
-    cv::waitKey(100);
-    viewer->spinOnce();
+
+
+
+    std::vector<visy::extractors::KeyPoint3D> keypoints;
+    cv::Mat descriptor;
+    pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
+    Eigen::Matrix4f model_pose;
+    dataset.fetchFullModel("asus_box", 37, keypoints, descriptor, model_cloud,model_pose, detector);
+
+
+
+    viewer->addPointCloud(model_cloud, "scene");
+    visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, keypoints, cv::Scalar(0, 255, 0), "ciao", true);
+
+    //  for (int i = 0; i < rototranslations.size(); i++)
+    //  {
+    //    pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
+    //    pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
+    //    std::stringstream ss;
+    //    ss << "Instance_" << i << "_cloud";
+    //    visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
+    //  }
+
+    //  cv::namedWindow("out", cv::WINDOW_NORMAL);
+    //  cv::imshow("out", out);
+    //  cv::namedWindow("out_scene", cv::WINDOW_NORMAL);
+    //  cv::imshow("out_scene", out_scene);
+
+    while (!viewer->wasStopped())
+    {
+      cv::waitKey(100);
+      viewer->spinOnce();
+    }
+
+
   }
-
-
-
 
   return 1;
 }
