@@ -210,9 +210,6 @@ namespace visy
         buildPrimiteCloudFromKeypoints(model_keypoints_cloud, model_keypoints);
         buildPrimiteCloudFromKeypoints(scene_keypoints_cloud, scene_keypoints);
 
-        std::cout << "Model Cloud::" << model_keypoints_cloud->points.size() << std::endl;
-        std::cout << "Scene Cloud::" << scene_keypoints_cloud->points.size() << std::endl;
-        std::cout << "XX Cloud::" << model_scene_corrs->size() << std::endl;
 
         pcl::GeometricConsistencyGrouping<PointType, PointType> gc_clusterer;
         gc_clusterer.setGCSize(gc_size);
@@ -227,7 +224,6 @@ namespace visy
 
         std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > temp_rototranslations;
         gc_clusterer.recognize(temp_rototranslations);
-        std::cout << "TEMP:" << temp_rototranslations.size() << std::endl;
         for (int i = 0; i < temp_rototranslations.size(); i++)
         {
           if (temp_rototranslations[i].block<3, 1>(0, 3).norm() > 0.000001f)
