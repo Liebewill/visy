@@ -19,7 +19,7 @@ namespace visy
     Bold3DDescriptorMultiBunch::Bold3DDescriptorMultiBunch (int n_bins, std::vector<float>& sizes, DFunction* dfunction, int bunch_method) : Descriptor (dfunction)
     {
       this->n_bins = n_bins;
-      this->size = n_bins * 3;
+      this->size = dfunction->getDataSize();
       this->sizes.insert(this->sizes.end(), sizes.begin(), sizes.end());
       this->bunch_method = bunch_method;
      
@@ -44,25 +44,10 @@ namespace visy
       visy::extractors::utils::buildPrimiteCloudFromKeypoints(keypoints_cloud, keypoints);
       kdtree.setInputCloud(keypoints_cloud);
 
-
-      //SEARCHING IN BUNCHES
-      std::vector<int> found_indices;
-      std::vector<float> indices_distances;
-      PointType searchPoint;
-
       for (int i = 0; i < keypoints.size(); i++)
       {
-        std::vector<Signature> signatures;
-        signatures.clear();
-        
-        visy::descriptors::utils::multiBunchDescription(keypoints[i],keypoints, sizes,bunch_method,dfunction,signatures);
-        
-        for(int j = 0; j < this->sizes.size(); j++){
-          
-          signatures[j].insertInMat(descriptor,i + (j * keypoints.size()));
-        }
+        visy::descriptors::utils::multiBunchDescription(keypoints[i],keypoints,kdtree, sizes,bunch_method,dfunction,descriptor,i);
       }
-
     }
 
     std::string

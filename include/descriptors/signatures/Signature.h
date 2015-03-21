@@ -10,12 +10,15 @@
 
 #include "Histogram1D.h"
 #include "boost/shared_ptr.hpp"
+#include "HistogramND.h"
+#include <cmath>
 
 namespace visy {
     namespace descriptors {
 
         class Signature {
         public:
+            static int STATIC_COUNTER;
             Signature(int dimension,float range,int n_bins, bool sparse = false);
             virtual ~Signature();
             float* getData();
@@ -30,6 +33,7 @@ namespace visy {
             int n_bins;
             bool sparse;
             std::vector<boost::shared_ptr<Histogram1D> > histograms;
+            boost::shared_ptr<HistogramND> multiHistogram;
             
         };
     }

@@ -243,9 +243,73 @@ namespace visy
       void
       replicateKeypoints (std::vector<KeyPoint3D>& source, std::vector<KeyPoint3D>& out, int times)
       {
-        for(int i = 0; i < times; i++){
-          out.insert(out.end(),source.begin(),source.end());
+        for (int i = 0; i < times; i++)
+        {
+          out.insert(out.end(), source.begin(), source.end());
         }
+      }
+
+      /**
+       * 
+       * @param model_keypoints
+       * @param scene_keypoints
+       * @param model_descriptor
+       * @param scene_descriptor
+       * @param rototranslations
+       */
+      void
+      modelSceneMatch (
+              std::vector<visy::extractors::KeyPoint3D>& model_keypoints,
+              std::vector<visy::extractors::KeyPoint3D>& scene_keypoints,
+              cv::Mat& model_descriptor,
+              cv::Mat& scene_descriptor,
+              std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
+              float gc_size,
+              float gc_th,
+              int match_type)
+      {
+        /* MATCHES */
+        std::vector<cv::DMatch> matches;
+        std::vector<cv::DMatch> good_matches;
+        visy::tools::matchKeypointsBrute(matches, good_matches, model_descriptor, scene_descriptor, match_type);
+
+        /* KEYLINES CONSENSUS SET*/
+        std::vector<visy::extractors::KeyPoint3D> matched_model_keypoints;
+        std::vector<visy::extractors::KeyPoint3D> matched_scene_keypoints;
+        std::vector<int> matched_model_keypoints_indices;
+        std::vector<int> matched_scene_keypoints_indices;
+        pcl::CorrespondencesPtr model_scene_corrs;
+        visy::extractors::utils::keypointsConsensusSet(
+                model_keypoints,
+                scene_keypoints,
+                good_matches,
+                matched_model_keypoints,
+                matched_scene_keypoints,
+                matched_model_keypoints_indices,
+                matched_scene_keypoints_indices,
+                model_scene_corrs);
+
+        /* GEOMETRU CONSISTENCY GROUPING*/
+        std::vector < pcl::Correspondences > clustered_corrs;
+        visy::extractors::utils::keypointsGeometricConsistencyGrouping(gc_size, gc_th,
+                matched_model_keypoints,
+                matched_scene_keypoints,
+                model_scene_corrs,
+                rototranslations,
+                clustered_corrs);
+
+      }
+
+      /**
+       * 
+       * @param source
+       * @param target
+       */
+      bool
+      isInOcclusionSide (visy::extractors::KeyPoint3D& source, visy::extractors::KeyPoint3D& target)
+      {
+        cv::Point3f d = target.pt3D - source.pt3D;
+        return target.direction_y.dot(d) < 0;
       }
       //END
     }

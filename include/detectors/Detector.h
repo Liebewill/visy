@@ -28,6 +28,7 @@
 
 #include <extractors/Extractor.h>
 #include <descriptors/Descriptor.h>
+#include <commons/Parameters.h>
 
 namespace visy {
     namespace detectors {
@@ -36,14 +37,16 @@ namespace visy {
         public:
             Detector();
             virtual ~Detector();
-            virtual void detect(cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor,cv::Mat* mask = NULL) = 0;
-            virtual void refineKeyPoints3D(std::vector<visy::extractors::KeyPoint3D>& keypoints_in,cv::Mat& descriptor_in, std::vector<visy::extractors::KeyPoint3D>& keypoints_out,cv::Mat& descriptor_out);
+            virtual void detect(cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, cv::Mat* mask = NULL) = 0;
+            virtual void refineKeyPoints3D(std::vector<visy::extractors::KeyPoint3D>& keypoints_in, cv::Mat& descriptor_in, std::vector<visy::extractors::KeyPoint3D>& keypoints_out, cv::Mat& descriptor_out);
+            virtual void refineKeyPoints3D(std::vector<visy::extractors::KeyPoint3D>& keypoints_in,  std::vector<visy::extractors::KeyPoint3D>& keypoints_out);
             std::string buildName();
             virtual std::string buildNameImpl() = 0;
-            
-        protected:
             visy::extractors::Extractor * extractor;
             visy::descriptors::Descriptor * descriptor;
+            bool isDetectorEmbedded();
+        protected:
+            bool detector_embedded;
             int multiplication_factor;
         };
     }

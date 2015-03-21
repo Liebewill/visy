@@ -55,6 +55,8 @@
 #include "Bold3DMDetector.h"
 #include "Bold3DRDetector.h"
 #include "BoldDetector.h"
+#include "detectors/detectors_utils.h"
+#include "Parameters.h"
 
 using namespace std;
 using namespace BoldLib;
@@ -69,6 +71,9 @@ int n_bins,
 int ** reg_img, int * reg_x, int * reg_y );
  */
 
+visy::Parameters* parameters;
+pcl::visualization::PCLVisualizer * viewer;
+
 /*
  *
  */
@@ -76,56 +81,66 @@ int
 main (int argc, char** argv)
 {
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
-  std::vector<float> sizes;
-  sizes.push_back(15);
-  sizes.push_back(25);
-  sizes.push_back(30);
 
-  visy::detectors::Detector * detector = new visy::detectors::Bold3DMDetector(sizes, 8);
-  pcl::visualization::PCLVisualizer * viewer;
-  viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+  /** PARAMETERS */
+  parameters = new visy::Parameters(argc, argv);
+  parameters->putFloat("gc_th");
+  parameters->putFloat("gc_size");
+  parameters->putString("detector");
+  parameters->putString("model");
+  parameters->putString("sizes");
+  parameters->putInt("set");
+  parameters->putInt("scene");
+  parameters->putInt("nbin");
+  parameters->putInt("occlusion");
+
+  int use_occlusion = false;
 
   visy::dataset::IrosDataset dataset;
+  visy::dataset::IrosDataset::init();
+  visy::dataset::Model model = visy::dataset::IrosDataset::findModelByName(parameters->getString("model"));
+
+  visy::detectors::Detector * detector;
+  viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters);
 
 
-  while (true)
+
+
+
+
+  std::vector<visy::extractors::KeyPoint3D> keypoints;
+  cv::Mat descriptor;
+  pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
+  Eigen::Matrix4f model_pose;
+  dataset.fetchFullModel(model.name, model.n_views, keypoints, descriptor, model_cloud, model_pose, detector);
+
+
+  viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+  viewer->addPointCloud(model_cloud, "scene");
+  visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, keypoints, cv::Scalar(0, 255, 0), "ciao", true);
+
+  //  for (int i = 0; i < rototranslations.size(); i++)
+  //  {
+  //    pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
+  //    pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
+  //    std::stringstream ss;
+  //    ss << "Instance_" << i << "_cloud";
+  //    visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
+  //  }
+
+  //  cv::namedWindow("out", cv::WINDOW_NORMAL);
+  //  cv::imshow("out", out);
+  //  cv::namedWindow("out_scene", cv::WINDOW_NORMAL);
+  //  cv::imshow("out_scene", out_scene);
+
+  while (!viewer->wasStopped())
   {
-
-
-
-    std::vector<visy::extractors::KeyPoint3D> keypoints;
-    cv::Mat descriptor;
-    pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
-    Eigen::Matrix4f model_pose;
-    dataset.fetchFullModel("asus_box", 37, keypoints, descriptor, model_cloud,model_pose, detector);
-
-
-
-    viewer->addPointCloud(model_cloud, "scene");
-    visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, keypoints, cv::Scalar(0, 255, 0), "ciao", true);
-
-    //  for (int i = 0; i < rototranslations.size(); i++)
-    //  {
-    //    pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
-    //    pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
-    //    std::stringstream ss;
-    //    ss << "Instance_" << i << "_cloud";
-    //    visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
-    //  }
-
-    //  cv::namedWindow("out", cv::WINDOW_NORMAL);
-    //  cv::imshow("out", out);
-    //  cv::namedWindow("out_scene", cv::WINDOW_NORMAL);
-    //  cv::imshow("out_scene", out_scene);
-
-    while (!viewer->wasStopped())
-    {
-      cv::waitKey(100);
-      viewer->spinOnce();
-    }
-
-
+    cv::waitKey(100);
+    viewer->spinOnce();
   }
+
+
 
   return 1;
 }

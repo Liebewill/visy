@@ -46,6 +46,8 @@ namespace visy {
             static const int KEYPOINT3D_TYPE_EDGE_TEXTURE = 1001;
             static const int KEYPOINT3D_TYPE_EDGE_OCCLUSION = 1002;
             
+            static int STATIC_COUNTER;
+            
             KeyPoint3D(cv::Vec4f line, pcl::PointCloud<PointType>::Ptr cloud);
             KeyPoint3D();
             virtual ~KeyPoint3D();
@@ -66,6 +68,7 @@ namespace visy {
             int type;
             
             KeyPoint3D clone();
+            
             static void transformKeyPoint3D(KeyPoint3D& in, KeyPoint3D& out,Eigen::Matrix4f& transform);
             static void transformKeyPoint3Ds(std::vector<KeyPoint3D>& keypoint_in,std::vector<KeyPoint3D>& keypoints_out,Eigen::Matrix4f& transform);
         protected:

@@ -25,6 +25,19 @@ namespace visy
     }
 
     int
+    DFunction::getDataSize ()
+    {
+      if (this->signature != NULL)
+      {
+        return this->signature->getSize();
+      }
+      else
+      {
+        return -1;
+      }
+    }
+
+    int
     DFunction::getSize ()
     {
       return this->size;

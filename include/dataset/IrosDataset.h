@@ -169,6 +169,7 @@ namespace visy {
             static bool checkPoses(std::string model_name, std::vector<Eigen::Matrix4f>& poses, std::vector<Annotation>& annotations);
 
             void fetchFullModel(std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, pcl::PointCloud<PointType>::Ptr& cloud,Eigen::Matrix4f& reference_pose, visy::detectors::Detector * detector);
+            void fetchFullModelSimple(std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints,  pcl::PointCloud<PointType>::Ptr& cloud,Eigen::Matrix4f& reference_pose, visy::detectors::Detector * detector);
         private:
 
         };

@@ -56,6 +56,10 @@
 #include "Bold3DRDetector.h"
 #include "BoldDetector.h"
 #include "Parameters.h"
+#include "Bold3DM2Detector.h"
+#include "Bold3DR2Detector.h"
+#include "Bold3DM2MultiDetector.h"
+#include "detectors/detectors_utils.h"
 
 using namespace std;
 using namespace BoldLib;
@@ -83,36 +87,56 @@ main (int argc, char** argv)
   /** PARAMETERS */
   parameters = new visy::Parameters(argc, argv);
   parameters->putFloat("gc_th");
+  parameters->putFloat("gc_size");
   parameters->putString("detector");
   parameters->putString("model");
   parameters->putString("sizes");
   parameters->putInt("set");
   parameters->putInt("scene");
   parameters->putInt("nbin");
+  parameters->putInt("occlusion");
+
+  int use_occlusion = false;
 
   visy::dataset::IrosDataset::init();
   visy::dataset::Model model = visy::dataset::IrosDataset::findModelByName(parameters->getString("model"));
 
-
-  std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
-
-
-
   visy::detectors::Detector * detector;
+  
+  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"),parameters);
+  
+  //  std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
+  //
+  //
+  //
+  //  visy::detectors::Detector * detector;
+  //
+  //  if (parameters->getString("detector") == "BOLD3DM")
+  //  {
+  //    detector = new visy::detectors::Bold3DMDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+  //  }
+  //  else if (parameters->getString("detector") == "BOLD3DM2")
+  //  {
+  //    detector = new visy::detectors::Bold3DM2Detector(sizes, parameters->getInt("nbin"), !use_occlusion);
+  //  }
+  //  else if (parameters->getString("detector") == "BOLD3DM2MULTI")
+  //  {
+  //    detector = new visy::detectors::Bold3DM2MultiDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+  //  }
+  //  else if (parameters->getString("detector") == "BOLD3DR2")
+  //  {
+  //    detector = new visy::detectors::Bold3DR2Detector(sizes, parameters->getInt("nbin"), !use_occlusion);
+  //  }
+  //  else if (parameters->getString("detector") == "BOLD3DR")
+  //  {
+  //    detector = new visy::detectors::Bold3DRDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+  //  }
+  //  else if (parameters->getString("detector") == "BOLD")
+  //  {
+  //    detector = new visy::detectors::BoldDetector(sizes);
+  //  }
 
-  if (parameters->getString("detector") == "BOLD3DM")
-  {
-    detector = new visy::detectors::Bold3DMDetector(sizes, parameters->getInt("nbin"));
-  }
-  else if (parameters->getString("detector") == "BOLD3DR")
-  {
-    detector = new visy::detectors::Bold3DRDetector(sizes, parameters->getInt("nbin"));
-  }
-  else if (parameters->getString("detector") == "BOLD")
-  {
-    detector = new visy::detectors::BoldDetector(sizes);
-  }
-
+  std::cout << "Detector: " << detector->buildName() << std::endl;
 
   pcl::visualization::PCLVisualizer * viewer;
   viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
@@ -130,29 +154,13 @@ main (int argc, char** argv)
 
   if (dataset.loadDescription(model.name, model_keypoints, model_descriptor, model_pose, detector->buildName()))
   {
-    visy::dataset::IrosDataset::loadModel(model.name,0,model_full_cloud,model_cloud,model_rgb,model_pose);
+    visy::dataset::IrosDataset::loadModel(model.name, 0, model_full_cloud, model_cloud, model_rgb, model_pose);
   }
   else
   {
     dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector);
 
   }
-
-
-  //  std::cout << "Tryimng size: "<<model_keypoints.size()<<"/"<<model_descriptor.rows<<"x"<<model_descriptor.cols<<std::endl;
-  //  std::cout << "Kps: "<<model_keypoints.size()<<"/"<<model_keypoints_2.size()<<std::endl;
-
-  //  int diffcounter = 0;
-  //  for(int i = 0; i < model_descriptor.rows; i++){
-  //    bool eq = cv::countNonZero(model_descriptor(cv::Rect(0,i,18,1))!=model_descriptor_2(cv::Rect(0,i,18,1))) == 0; 
-  //    if(!eq){
-  //      diffcounter++;
-  //      std::cout << "###\n"<<model_descriptor(cv::Rect(0,i,18,1));
-  //      std::cout << "\n"<<model_descriptor_2(cv::Rect(0,i,18,1));
-  //      std::cout << "###\n";
-  //    }
-  //  }
-  //  std::cout << "Dissimilarity:"<<diffcounter<<std::endl;
 
 
   std::vector<visy::extractors::KeyPoint3D> scene_keypoints;
@@ -165,42 +173,21 @@ main (int argc, char** argv)
   detector->detect(scene_rgb, scene_cloud, scene_keypoints, scene_descriptor);
 
 
-  /* MATCHES */
-  std::vector<cv::DMatch> matches;
-  std::vector<cv::DMatch> good_matches;
-  visy::tools::matchKeypointsBrute(matches, good_matches, model_descriptor, scene_descriptor, visy::tools::VISY_TOOLS_MATCHING_FULL);
-  std::cout << "MAtrch " << good_matches.size() << std::endl;
 
 
-  /* KEYLINES CONSENSUS SET*/
-  std::vector<visy::extractors::KeyPoint3D> matched_model_keypoints;
-  std::vector<visy::extractors::KeyPoint3D> matched_scene_keypoints;
-  std::vector<int> matched_model_keypoints_indices;
-  std::vector<int> matched_scene_keypoints_indices;
-  pcl::CorrespondencesPtr model_scene_corrs;
-  visy::extractors::utils::keypointsConsensusSet(
+  std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
+
+  visy::extractors::utils::modelSceneMatch(
           model_keypoints,
           scene_keypoints,
-          good_matches,
-          matched_model_keypoints,
-          matched_scene_keypoints,
-          matched_model_keypoints_indices,
-          matched_scene_keypoints_indices,
-          model_scene_corrs);
-
-  std::cout << "Model Filtered:" << matched_model_keypoints.size() << std::endl;
-  std::cout << "Scene Filtered:" << matched_scene_keypoints.size() << std::endl;
-  std::cout << "Model Scene corss:" << model_scene_corrs->size() << std::endl;
-
-  /* GEOMETRU CONSISTENCY GROUPING*/
-  std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
-  std::vector < pcl::Correspondences > clustered_corrs;
-  visy::extractors::utils::keypointsGeometricConsistencyGrouping(0.05f, parameters->getFloat("gc_th"),
-          matched_model_keypoints,
-          matched_scene_keypoints,
-          model_scene_corrs,
+          model_descriptor,
+          scene_descriptor,
           rototranslations,
-          clustered_corrs);
+          parameters->getFloat("gc_size"),
+          parameters->getFloat("gc_th")
+          );
+
+
 
 
 

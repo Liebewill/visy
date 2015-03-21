@@ -159,8 +159,8 @@ namespace visy
 
       float size = -1.0f;
       fs["size"] >> size;
-      
-      
+
+
       std::stringstream ss;
       for (int i = 0; i < size; i++)
       {
@@ -175,6 +175,52 @@ namespace visy
 
       std::cout << "Loaded size: " << keypoints.size() << "/" << descriptor.rows << "x" << descriptor.cols << std::endl;
       fs.release();
+    }
+
+    void
+    Dataset::savePrecisionMat (std::string descriptor_name, cv::Mat& precisionMat)
+    {
+      this->createBaseFolder();
+      this->createDatasetFolder();
+      this->createPrecisionFolder();
+
+      std::string file_name = getFilePrecisionPath(descriptor_name, "data");
+      std::string file_name_csv = getFilePrecisionPath(descriptor_name, "csv");
+
+      std::cout << "PRECISON FILE: " << file_name << std::endl;
+      cv::Mat previousMat(precisionMat.rows, precisionMat.cols, precisionMat.type(),float(0));
+
+      cv::FileStorage fs(file_name, cv::FileStorage::READ);
+      if (fs.isOpened())
+      {
+        fs["precision"] >> previousMat;
+        fs.release();
+      }
+
+      cv::Mat outMat = precisionMat + previousMat;
+
+
+      cv::FileStorage fw(file_name, cv::FileStorage::WRITE);
+      fw << "precision" << outMat;
+      fw.release();
+
+      ofstream csv;
+      csv.open(file_name_csv.c_str());
+      csv << std::fixed;
+      for (int i = 0; i < outMat.rows; i++)
+      {
+        for (int j = 0; j < outMat.cols; j++)
+        {
+          csv << outMat.at<float>(i, j);
+          if (j < outMat.cols - 1)
+          {
+            csv << ";";
+          }
+
+        }
+        csv << "\n";
+      }
+      csv.close();
     }
 
     void
@@ -205,6 +251,28 @@ namespace visy
       std::stringstream ss;
       ss << this->getModelFolder(model_name) << file_name << "." << extension;
       return ss.str();
+    }
+
+    std::string
+    Dataset::getFilePrecisionPath (std::string file_name, std::string extension)
+    {
+      std::stringstream ss;
+      ss << this->getPrecisionFolder() << file_name << "." << extension;
+      return ss.str();
+    }
+
+    std::string
+    Dataset::getPrecisionFolder ()
+    {
+      std::stringstream ss;
+      ss << this->getDatasetFolder() << "precision/";
+      return ss.str();
+    }
+
+    void
+    Dataset::createPrecisionFolder ()
+    {
+      boost::filesystem::create_directories(this->getPrecisionFolder());
     }
 
     void

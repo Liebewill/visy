@@ -118,13 +118,13 @@ namespace visy
     void
     IrosDataset::loadScene (int set_number, int scene_number, pcl::PointCloud<PointType>::Ptr scene, cv::Mat& rgb_scene)
     {
-
-
       std::stringstream path;
       path << BASE_PATH << SETS_PATH << "set_" << paddedNumber(set_number, 5) << "/";
 
       std::stringstream cloud_filename;
       cloud_filename << path.str() << paddedNumber(scene_number, 5) << ".pcd";
+
+      std::cout << "Loading cloud: " << cloud_filename.str() << std::endl;
 
       if (pcl::io::loadPCDFile(cloud_filename.str(), *scene) < 0)
       {
@@ -191,6 +191,7 @@ namespace visy
           }
         }
       }
+      delete[] idxs;
 
 
     }
@@ -352,11 +353,74 @@ namespace visy
     }
 
     void
-    IrosDataset::fetchFullModel (std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, pcl::PointCloud<PointType>::Ptr& cloud,Eigen::Matrix4f& reference_pose, visy::detectors::Detector* detector)
+    IrosDataset::fetchFullModel (std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& reference_pose, visy::detectors::Detector* detector)
     {
+      if (detector->isDetectorEmbedded())
+      {
+        std::vector<visy::extractors::KeyPoint3D> keypoints_temp;
+        cv::Mat descriptor_temp;
 
+        keypoints_temp.clear();
+
+        for (int i = 0; i <= views_max_number; i++)
+        {
+          cv::Mat model_rgb, model_rgb_full;
+          pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
+          pcl::PointCloud<PointType>::Ptr model_cloud_full(new pcl::PointCloud<PointType>());
+          Eigen::Matrix4f model_pose;
+
+          std::vector<visy::extractors::KeyPoint3D> view_keypoints;
+          std::vector<visy::extractors::KeyPoint3D> view_keypoints_rotated;
+          cv::Mat view_descriptor;
+
+          //LOAD MODEL
+          loadModel(
+                  model_name, i,
+                  model_cloud_full, model_cloud,
+                  model_rgb, model_rgb_full,
+                  model_pose);
+
+          detector->detect(model_rgb, model_cloud_full, view_keypoints, view_descriptor);
+
+          if (view_keypoints.size() == 0)continue;
+
+          if (keypoints_temp.size() == 0)
+          {
+            cloud = model_cloud;
+            reference_pose = visy::tools::invertTransformationMatrix(model_pose);
+            view_keypoints_rotated = view_keypoints;
+            descriptor_temp = view_descriptor;
+          }
+          else
+          {
+            Eigen::Matrix4f inv = reference_pose*model_pose;
+            //          view_keypoints_rotated = view_keypoints;
+            visy::extractors::KeyPoint3D::transformKeyPoint3Ds(view_keypoints, view_keypoints_rotated, inv);
+            cv::vconcat(descriptor_temp, view_descriptor, descriptor_temp);
+            pcl::transformPointCloud(*model_cloud, *model_cloud, inv);
+            cloud->points.insert(cloud->points.end(), model_cloud->points.begin(), model_cloud->points.end());
+          }
+
+          keypoints_temp.insert(keypoints_temp.end(), view_keypoints_rotated.begin(), view_keypoints_rotated.end());
+
+        }
+
+        detector->refineKeyPoints3D(keypoints_temp, descriptor_temp, keypoints, descriptor);
+      }
+      else
+      { 
+        std::vector<visy::extractors::KeyPoint3D> keypoints_temp;
+        fetchFullModelSimple(model_name, views_max_number, keypoints_temp, cloud, reference_pose, detector);
+        cv::Mat fake;
+        detector->refineKeyPoints3D(keypoints_temp,keypoints);
+        detector->descriptor->describe(fake, cloud, keypoints, descriptor);
+      }
+    }
+
+    void
+    IrosDataset::fetchFullModelSimple (std::string model_name, int views_max_number, std::vector<visy::extractors::KeyPoint3D>& keypoints, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& reference_pose, visy::detectors::Detector* detector)
+    {
       std::vector<visy::extractors::KeyPoint3D> keypoints_temp;
-      cv::Mat descriptor_temp;
 
       keypoints_temp.clear();
 
@@ -369,7 +433,6 @@ namespace visy
 
         std::vector<visy::extractors::KeyPoint3D> view_keypoints;
         std::vector<visy::extractors::KeyPoint3D> view_keypoints_rotated;
-        cv::Mat view_descriptor;
 
         //LOAD MODEL
         loadModel(
@@ -378,7 +441,7 @@ namespace visy
                 model_rgb, model_rgb_full,
                 model_pose);
 
-        detector->detect(model_rgb, model_cloud_full, view_keypoints, view_descriptor);
+        detector->extractor->extract(model_rgb, model_cloud_full, view_keypoints);
 
         if (view_keypoints.size() == 0)continue;
 
@@ -387,14 +450,13 @@ namespace visy
           cloud = model_cloud;
           reference_pose = visy::tools::invertTransformationMatrix(model_pose);
           view_keypoints_rotated = view_keypoints;
-          descriptor_temp = view_descriptor;
+
         }
         else
         {
           Eigen::Matrix4f inv = reference_pose*model_pose;
           //          view_keypoints_rotated = view_keypoints;
           visy::extractors::KeyPoint3D::transformKeyPoint3Ds(view_keypoints, view_keypoints_rotated, inv);
-          cv::vconcat(descriptor_temp, view_descriptor, descriptor_temp);
           pcl::transformPointCloud(*model_cloud, *model_cloud, inv);
           cloud->points.insert(cloud->points.end(), model_cloud->points.begin(), model_cloud->points.end());
         }
@@ -403,8 +465,9 @@ namespace visy
 
       }
 
-      detector->refineKeyPoints3D(keypoints_temp, descriptor_temp, keypoints, descriptor);
+      detector->refineKeyPoints3D(keypoints_temp, keypoints);
     }
+
 
 
   }

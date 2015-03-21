@@ -129,6 +129,34 @@ namespace visy {
              * @param times number of replications
              */
             void replicateKeypoints(std::vector<KeyPoint3D>& source, std::vector<KeyPoint3D>& out, int times = 1);
+
+
+
+            /**
+             * Model Scene Full Match
+             * @param model_keypoints
+             * @param scene_keypoints
+             * @param model_descriptor
+             * @param scene_descriptor
+             * @param rototranslations
+             */
+            void modelSceneMatch(
+                    std::vector<visy::extractors::KeyPoint3D>& model_keypoints,
+                    std::vector<visy::extractors::KeyPoint3D>& scene_keypoints,
+                    cv::Mat& model_descriptor,
+                    cv::Mat& scene_descriptor,
+                    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
+                    float gc_size,
+                    float gc_th,
+                    int match_type = visy::tools::VISY_TOOLS_MATCHING_FULL);
+            
+            /**
+             * Checks if target KeyPoint3D is in occlusion side wrt source KeyPoint3D
+             * @param source
+             * @param target
+             * @return TRUE or FALSE
+             */
+            bool isInOcclusionSide(visy::extractors::KeyPoint3D& source,visy::extractors::KeyPoint3D& target);
         }
 
     }

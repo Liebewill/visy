@@ -11,7 +11,9 @@ namespace visy
 {
   namespace extractors
   {
-
+    
+    int KeyPoint3D::STATIC_COUNTER = 0;
+    
     KeyPoint3D::KeyPoint3D (cv::Vec4f line, pcl::PointCloud<PointType>::Ptr cloud) : cv::KeyPoint ()
     {
 

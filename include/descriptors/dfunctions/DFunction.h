@@ -22,6 +22,7 @@ namespace visy {
             virtual std::string buildStringImpl() = 0;
             virtual std::string buildString();
             int getSize();
+            int getDataSize();
             Signature* getSignature();
         protected:
             int size;

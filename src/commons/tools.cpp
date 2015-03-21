@@ -92,6 +92,8 @@ namespace visy
                   (float) edges[5 * tp + 3]);
           lines.push_back(line);
         }
+        delete[] d_img;
+        delete[] edges;
       }
     }
 
@@ -463,9 +465,9 @@ namespace visy
     Eigen::Matrix4f
     rotationMatrixFromTransformationMatrix (Eigen::Matrix4f& t)
     {
-       Eigen::Matrix3f R = t.block<3, 3>(0, 0);
+      Eigen::Matrix3f R = t.block<3, 3>(0, 0);
       Eigen::Vector3f translation;
-      translation<<0.0f,0.0f,0.0f;
+      translation << 0.0f, 0.0f, 0.0f;
       Eigen::MatrixXf last_block = t.block<1, 4>(3, 0);
 
       Eigen::MatrixXf Temp(3, 4);
@@ -474,7 +476,7 @@ namespace visy
       t2 << Temp, last_block;
 
       return t2;
-      
+
     }
 
     void

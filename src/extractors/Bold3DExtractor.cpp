@@ -142,7 +142,8 @@ namespace visy
       {
         keypoints.insert(keypoints.end(), keypoints_temp.begin(), keypoints_temp.end());
       }
-
+      
+      keypoints_temp.clear();
 
     }
 

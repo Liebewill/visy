@@ -29,7 +29,7 @@ namespace visy
     Descriptor::buildName ()
     {
       std::stringstream ss;
-      ss << "DESCRIPTOR_" << this->buildNameImpl();
+      ss << "DESCRIPTOR_" << this->buildNameImpl()<<";"<<this->dfunction->buildString();
       return ss.str();
     }
 

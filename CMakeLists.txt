@@ -78,10 +78,14 @@ target_link_libraries (visy_extractors visy_commons)
 add_library(visy_descriptors
             src/descriptors/signatures/Signature.cpp
             src/descriptors/signatures/Histogram1D.cpp
+            src/descriptors/signatures/HistogramND.cpp
             src/descriptors/Descriptor.cpp
             src/descriptors/Bold3DDescriptorMultiBunch.cpp
             src/descriptors/dfunctions/DFunction.cpp
             src/descriptors/dfunctions/DFunctionB3DV1.cpp
+            src/descriptors/dfunctions/DFunctionB3DV2.cpp
+            src/descriptors/dfunctions/DFunctionB3DV1Multi.cpp
+            src/descriptors/dfunctions/DFunctionB3DV2Multi.cpp
             src/descriptors/descriptors_utils.cpp
             )
 target_link_libraries (visy_descriptors ${PCL_LIBRARIES})
@@ -93,8 +97,14 @@ target_link_libraries (visy_descriptors visy_commons)
 add_library(visy_detectors
             src/detectors/Detector.cpp
             src/detectors/Bold3DMDetector.cpp
+            src/detectors/Bold3DM2Detector.cpp
+            src/detectors/Bold3DM2MultiDetector.cpp
             src/detectors/Bold3DRDetector.cpp
+            src/detectors/Bold3DR2Detector.cpp
+            src/detectors/Bold3DR2MultiDetector.cpp
             src/detectors/BoldDetector.cpp
+            src/detectors/Bold3DXDetector.cpp
+            src/detectors/detectors_utils.cpp
             )
 target_link_libraries (visy_detectors ${PCL_LIBRARIES})
 target_link_libraries (visy_detectors ${OpenCV_LIBS})
