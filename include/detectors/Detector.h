@@ -45,9 +45,10 @@ namespace visy {
             visy::extractors::Extractor * extractor;
             visy::descriptors::Descriptor * descriptor;
             bool isDetectorEmbedded();
+            int getMultiplicationFactor();
         protected:
-            bool detector_embedded;
             int multiplication_factor;
+            bool detector_embedded;
         };
     }
 }

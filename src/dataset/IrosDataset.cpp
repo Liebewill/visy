@@ -410,10 +410,12 @@ namespace visy
       else
       { 
         std::vector<visy::extractors::KeyPoint3D> keypoints_temp;
+        std::vector<visy::extractors::KeyPoint3D> keypoints_filtered;
         fetchFullModelSimple(model_name, views_max_number, keypoints_temp, cloud, reference_pose, detector);
         cv::Mat fake;
-        detector->refineKeyPoints3D(keypoints_temp,keypoints);
-        detector->descriptor->describe(fake, cloud, keypoints, descriptor);
+        detector->refineKeyPoints3D(keypoints_temp,keypoints_filtered);
+        detector->descriptor->describe(fake, cloud, keypoints_filtered, descriptor);
+        visy::extractors::utils::replicateKeypoints(keypoints_filtered, keypoints, detector->getMultiplicationFactor());
       }
     }
 

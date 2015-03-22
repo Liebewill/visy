@@ -113,12 +113,13 @@ main (int argc, char** argv)
   cv::Mat descriptor;
   pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
   Eigen::Matrix4f model_pose;
-  dataset.fetchFullModel(model.name, model.n_views, keypoints, descriptor, model_cloud, model_pose, detector);
+  dataset.fetchFullModel(model.name, 0, keypoints, descriptor, model_cloud, model_pose, detector);
 
 
   viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
   viewer->addPointCloud(model_cloud, "scene");
-  visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, keypoints, cv::Scalar(0, 255, 0), "ciao", true);
+  
+  visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, keypoints, cv::Scalar(0, 255, 0), "ciao", false);
 
   //  for (int i = 0; i < rototranslations.size(); i++)
   //  {

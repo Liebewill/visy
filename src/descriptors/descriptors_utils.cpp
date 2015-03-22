@@ -50,19 +50,23 @@ namespace visy
           dfunction->getSignature()->initialize();
           for (int index = 1; index < found_indices.size(); index++)
           {
-            float* v;
-            if (kp3d.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION)
+            if (found_indices[index] < keypoints.size() && found_indices[index] >= 0)
             {
-              if (visy::extractors::utils::isInOcclusionSide(kp3d, keypoints[found_indices[index]]))
-              {
-                continue;
-              }
-            }
 
-            dfunction->f(kp3d, keypoints[found_indices[index]], &v);
-            dfunction->getSignature()->pinValue(v);
-            //            std::cout << "Distance : "<<indices_distances[index]<< " v:"<<v[0]<<","<<v[1]<<","<<v[2]<<std::endl;
-            delete v;
+              float* v;
+              if (kp3d.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION)
+              {
+                if (visy::extractors::utils::isInOcclusionSide(kp3d, keypoints[found_indices[index]]))
+                {
+                  continue;
+                }
+              }
+
+              dfunction->f(kp3d, keypoints[found_indices[index]], &v);
+              dfunction->getSignature()->pinValue(v);
+              //            std::cout << "Distance : "<<indices_distances[index]<< " v:"<<v[0]<<","<<v[1]<<","<<v[2]<<std::endl;
+              delete v;
+            }
           }
           //          std::cout << "---"<<std::endl;
 

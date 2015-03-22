@@ -102,9 +102,9 @@ main (int argc, char** argv)
   visy::dataset::Model model = visy::dataset::IrosDataset::findModelByName(parameters->getString("model"));
 
   visy::detectors::Detector * detector;
-  
-  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"),parameters);
-  
+
+  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters);
+
   //  std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
   //
   //
@@ -170,10 +170,13 @@ main (int argc, char** argv)
 
   visy::dataset::IrosDataset::loadScene(parameters->getInt("set"), parameters->getInt("scene"), scene_cloud, scene_rgb);
 
+  boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
+
   detector->detect(scene_rgb, scene_cloud, scene_keypoints, scene_descriptor);
 
-
-
+  boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
+  boost::posix_time::time_duration duration(time_end - time_start);
+  cout << "Detector time: " << duration << '\n';
 
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
 

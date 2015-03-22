@@ -308,6 +308,16 @@ namespace visy
       bool
       isInOcclusionSide (visy::extractors::KeyPoint3D& source, visy::extractors::KeyPoint3D& target)
       {
+        if (
+                isnan(target.pt3D.x) ||
+                isnan(target.pt3D.y) ||
+                isnan(target.pt3D.z) ||
+                isnan(source.pt3D.x) ||
+                isnan(source.pt3D.y) ||
+                isnan(source.pt3D.z)
+                )
+          return false;
+
         cv::Point3f d = target.pt3D - source.pt3D;
         return target.direction_y.dot(d) < 0;
       }

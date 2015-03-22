@@ -35,6 +35,11 @@ namespace visy
         delete this->descriptor;
       }
     }
+    int
+    Detector::getMultiplicationFactor ()
+    {
+      return this->multiplication_factor;
+    }
 
     bool
     Detector::isDetectorEmbedded ()

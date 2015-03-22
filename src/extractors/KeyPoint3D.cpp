@@ -11,9 +11,9 @@ namespace visy
 {
   namespace extractors
   {
-    
+
     int KeyPoint3D::STATIC_COUNTER = 0;
-    
+
     KeyPoint3D::KeyPoint3D (cv::Vec4f line, pcl::PointCloud<PointType>::Ptr cloud) : cv::KeyPoint ()
     {
 
@@ -44,6 +44,57 @@ namespace visy
         p03D = cv::Point3f(0, 0, 0);
 
       int point1_3d_index = (int) (p1.x) + (int) (p1.y * cloud->width);
+      x = cloud->points[point1_3d_index].x;
+      y = cloud->points[point1_3d_index].y;
+      z = cloud->points[point1_3d_index].z;
+      cv::Point3f p13D = cv::Point3f(x, y, z);
+      if (pcl::isFinite(cloud->points[point1_3d_index]))
+        p13D = cv::Point3f(x, y, z);
+      else
+        p13D = cv::Point3f(0, 0, 0);
+
+      float nx = (p13D.x + p03D.x) / 2.0f;
+      float ny = (p13D.y + p03D.y) / 2.0f;
+      float nz = (p13D.z + p03D.z) / 2.0f;
+
+      this->pt3D = cv::Point3f(nx, ny, nz);
+
+      float dx = (p13D.x - p03D.x);
+      float dy = (p13D.y - p03D.y);
+      float dz = (p13D.z - p03D.z);
+
+      this->direction_x = cv::Point3f(dx, dy, dz);
+      this->pt3D_1 = p03D;
+      this->pt3D_2 = p13D;
+
+      this->type = KEYPOINT3D_TYPE_UNKNOWN;
+    }
+
+    KeyPoint3D::KeyPoint3D (cv::KeyPoint kp, pcl::PointCloud<PointType>::Ptr cloud)
+    {
+      this->pt = kp.pt;
+      this->angle = kp.angle;
+      this->octave = kp.octave;
+      this->size = kp.size;
+      this->class_id = kp.class_id;
+
+      cv::Point2f vdir = cv::Point2f(cos(this->angle*M_PI/180.0f)*kp.size/2.0f,sin(this->angle*M_PI/180.0f)*kp.size/2.0f);
+      this->pt1 = kp.pt + vdir;
+      this->pt2 = kp.pt - vdir;
+
+      float x, y, z;
+
+      int point0_3d_index = (int) (this->pt1.x) + (int) (this->pt1.y * cloud->width);
+      x = cloud->points[point0_3d_index].x;
+      y = cloud->points[point0_3d_index].y;
+      z = cloud->points[point0_3d_index].z;
+      cv::Point3f p03D;
+      if (pcl::isFinite(cloud->points[point0_3d_index]))
+        p03D = cv::Point3f(x, y, z);
+      else
+        p03D = cv::Point3f(0, 0, 0);
+
+      int point1_3d_index = (int) (this->pt2.x) + (int) (this->pt2.y * cloud->width);
       x = cloud->points[point1_3d_index].x;
       y = cloud->points[point1_3d_index].y;
       z = cloud->points[point1_3d_index].z;

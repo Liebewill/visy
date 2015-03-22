@@ -28,9 +28,7 @@ ft7='test_0.05_DETECTOR_BOLD3DM2MULTI!EXTRACTOR_BOLD3D;1;5;2;25;0.001!DESCRIPTOR
 t7=readResults(dataset,ft7);
 plotResults(t7,colors(7,:),w);hold on;
 
-ft8='test_0.01_DETECTOR_BOLD3DM2MULTI!EXTRACTOR_BOLD3D;1;5;2;25;0.001!DESCRIPTOR_BOLD3D-MULTIBUNCH;12;100;(5,15,25,35,45);DF_B3DV2-MULTI.csv';
-t8=readResults(dataset,ft8);
-plotResults(t8,colors(8,:),w);hold on;
+
 
    xlabel('1-precision');
     ylabel('recall');

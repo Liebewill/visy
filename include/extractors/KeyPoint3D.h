@@ -45,10 +45,15 @@ namespace visy {
             static const int KEYPOINT3D_TYPE_EDGE_SURFACE = 1000;
             static const int KEYPOINT3D_TYPE_EDGE_TEXTURE = 1001;
             static const int KEYPOINT3D_TYPE_EDGE_OCCLUSION = 1002;
+            static const int KEYPOINT3D_TYPE_EDGE_OCCLUSION_EXT = 1003;
+            static const int KEYPOINT3D_TYPE_2D_SURFACE = 1004;
+            static const int KEYPOINT3D_TYPE_2D_TEXTURE = 1005;
+            static const int KEYPOINT3D_TYPE_2D_OCCLUSION = 1006;
             
             static int STATIC_COUNTER;
             
             KeyPoint3D(cv::Vec4f line, pcl::PointCloud<PointType>::Ptr cloud);
+            KeyPoint3D(cv::KeyPoint kp, pcl::PointCloud<PointType>::Ptr cloud);
             KeyPoint3D();
             virtual ~KeyPoint3D();
             static void draw3DKeyPoints(cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, float tick,bool force_color = false);

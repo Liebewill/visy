@@ -37,6 +37,6 @@ plotResults(t9,colors(9,:),w);hold on;
    xlabel('1-precision');
     ylabel('recall');
    legend('10','11','12','4','5','6','7','8','9', 'Location','northwest');
-
+grid on;
 end
 
