@@ -102,8 +102,10 @@ main (int argc, char** argv)
   visy::dataset::Model model = visy::dataset::IrosDataset::findModelByName(parameters->getString("model"));
 
   visy::detectors::Detector * detector;
+  visy::detectors::Detector * detector_model;
 
-  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters);
+  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, false);
+  detector_model = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, true);
 
   //  std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
   //
@@ -152,15 +154,7 @@ main (int argc, char** argv)
   cv::Mat model_rgb;
   Eigen::Matrix4f model_pose;
 
-  if (dataset.loadDescription(model.name, model_keypoints, model_descriptor, model_pose, detector->buildName()))
-  {
-    visy::dataset::IrosDataset::loadModel(model.name, 0, model_full_cloud, model_cloud, model_rgb, model_pose);
-  }
-  else
-  {
-    dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector);
-
-  }
+  dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector_model);
 
 
   std::vector<visy::extractors::KeyPoint3D> scene_keypoints;

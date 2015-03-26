@@ -100,48 +100,38 @@ main (int argc, char** argv)
   visy::dataset::IrosDataset::init();
   visy::dataset::Model model = visy::dataset::IrosDataset::findModelByName(parameters->getString("model"));
 
-  visy::detectors::Detector * detector;
-  viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
-  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters);
+  std::vector<visy::extractors::KeyPoint3D> scene_keypoints;
+  cv::Mat scene_descriptor;
+  cv::Mat scene_rgb, scene_rgb_full;
+  pcl::PointCloud<PointType>::Ptr scene_cloud(new pcl::PointCloud<PointType>());
+  visy::dataset::IrosDataset::loadScene(parameters->getInt("set"), parameters->getInt("scene"), scene_cloud, scene_rgb);
 
 
+  //BOLD
 
+  std::vector<cv::Vec4f> lines;
+  std::vector<cv::Vec4f> lines_2;
+  visy::tools::edgeDetection(scene_rgb, lines, visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_LSD);
+  visy::tools::edgeDetection(scene_rgb, lines_2, visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD);
 
-
-
-  std::vector<visy::extractors::KeyPoint3D> keypoints;
-  cv::Mat descriptor;
-  pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
-  Eigen::Matrix4f model_pose;
-  dataset.fetchFullModel(model.name, 0, keypoints, descriptor, model_cloud, model_pose, detector);
-
-
-  viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
-  viewer->addPointCloud(model_cloud, "scene");
-  
-  visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, keypoints, cv::Scalar(0, 255, 0), "ciao", false);
-
-  //  for (int i = 0; i < rototranslations.size(); i++)
-  //  {
-  //    pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
-  //    pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
-  //    std::stringstream ss;
-  //    ss << "Instance_" << i << "_cloud";
-  //    visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
-  //  }
-
-  //  cv::namedWindow("out", cv::WINDOW_NORMAL);
-  //  cv::imshow("out", out);
-  //  cv::namedWindow("out_scene", cv::WINDOW_NORMAL);
-  //  cv::imshow("out_scene", out_scene);
-
-  while (!viewer->wasStopped())
+  cv::Mat out = scene_rgb.clone();
+  cv::Mat out_2 = scene_rgb.clone();
+  for (int i = 0; i < lines.size(); i++)
   {
-    cv::waitKey(100);
-    viewer->spinOnce();
+
+    cv::line(out, cv::Point(lines[i].val[0], lines[i].val[1]), cv::Point(lines[i].val[2], lines[i].val[3]), cv::Scalar(0, 0, 255));
+  }
+  for (int i = 0; i < lines_2.size(); i++)
+  {
+
+    cv::line(out_2, cv::Point(lines_2[i].val[0], lines_2[i].val[1]), cv::Point(lines_2[i].val[2], lines_2[i].val[3]), cv::Scalar(0, 0, 255));
   }
 
-
+  std::cout << "FOUND:" << lines.size() << std::endl;
+  std::cout << "FOUND:" << lines_2.size() << std::endl;
+  cv::imshow("LSD", out);
+  cv::imshow("BOLD_LSD", out_2);
+  cv::waitKey(0);
 
   return 1;
 }

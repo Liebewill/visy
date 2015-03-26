@@ -20,7 +20,7 @@ namespace visy {
              * @param parameters
              * @return 
              */
-            Detector * buildDetectorFromString(std::string detector_name, visy::Parameters* parameters);
+            Detector * buildDetectorFromString(std::string detector_name, visy::Parameters* parameters,bool is_model_detector = false);
         }
     }
 }

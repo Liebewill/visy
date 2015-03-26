@@ -82,8 +82,10 @@ main (int argc, char** argv)
   parameters->putFloat("gc_size");
   parameters->putString("detector");
   parameters->putString("sizes");
+  parameters->putString("name");
   parameters->putInt("nbin");
   parameters->putInt("occlusion");
+  parameters->putBool("d");
 
 
   int use_occlusion = false;
@@ -98,9 +100,14 @@ main (int argc, char** argv)
 
 
   /** DETECTOR CREATION */
+  bool different_detectors = parameters->getBool("d");
   visy::detectors::Detector * detector;
-  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"),parameters);
+  visy::detectors::Detector * detector_model;
+  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters);
+  detector_model = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, different_detectors);
 
+  std::cout << "MODEL DETECTOR: " << detector_model->buildName() << std::endl;
+  std::cout << "SCENE DETECTOR: " << detector->buildName() << std::endl;
 
 
   /** RESULTS SETS*/
@@ -109,7 +116,12 @@ main (int argc, char** argv)
 
   /** TEST NAME*/
   std::stringstream ss;
-  ss << "test_" << parameters->getFloat("gc_size") << "_" << detector->buildName();
+  ss << "test_";
+  if (different_detectors)
+  {
+    ss << "DIFF_";
+  }
+  ss << parameters->getFloat("gc_size") << "_" << detector->buildName();
 
   std::string test_name = ss.str();
 
@@ -127,7 +139,7 @@ main (int argc, char** argv)
     Eigen::Matrix4f model_pose;
 
     std::cout << "Loading model: " << model.name << std::endl;
-    dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector);
+    dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector_model);
     std::cout << "Loaded model: " << model.name << " keypoints:" << model_keypoints.size() << std::endl;
 
     for (int set_index = 0; set_index < visy::dataset::IrosDataset::scenes->size(); set_index++)
@@ -216,7 +228,7 @@ main (int argc, char** argv)
 
         }
         dataset.savePrecisionMat(test_name, precisionMat);
-        
+
         scene_keypoints.clear();
         scene_annotations.clear();
       }

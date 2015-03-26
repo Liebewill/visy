@@ -14,13 +14,14 @@ namespace visy
   namespace extractors
   {
 
-    Bold3DExtractor::Bold3DExtractor (bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance) : Extractor ()
+    Bold3DExtractor::Bold3DExtractor (bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance,int extraction_method) : Extractor ()
     {
       this->filter_occlusion = filter_occlusion;
       this->area_radius = zone_radius;
       this->area_slice = zone_slice;
       this->area_normals_angular_th = area_normals_angular_th;
       this->area_max_distance = area_max_distance;
+      this->extraction_method = extraction_method;
     }
 
     Bold3DExtractor::Bold3DExtractor (const Bold3DExtractor& orig)
@@ -37,7 +38,7 @@ namespace visy
     Bold3DExtractor::extract (cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<KeyPoint3D>& keypoints, cv::Mat* mask)
     {
       std::vector<cv::Vec4f> lines;
-      visy::tools::edgeDetection(source, lines, visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_LSD);
+      visy::tools::edgeDetection(source, lines, this->extraction_method);
 
       std::vector<KeyPoint3D> keypoints_temp;
 
@@ -184,6 +185,7 @@ namespace visy
     {
       std::stringstream ss;
       ss << "BOLD3D;";
+      ss << "E"<<this->extraction_method<<";";
       ss << this->filter_occlusion << ";";
       ss << this->area_radius << ";";
       ss << this->area_slice << ";";

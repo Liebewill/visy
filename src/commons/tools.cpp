@@ -39,6 +39,86 @@ namespace visy
     }
 
     /**
+     * 
+     * @param source
+     * @param lines
+     */
+    void
+    edgeDetectionLSD (cv::Mat& gray, std::vector<cv::Vec4f>& lines)
+    {
+      int n;
+      int X = gray.cols;
+      int Y = gray.rows;
+      double* d_img = (double *) malloc(X * Y * sizeof (double));
+
+      for (int x = 0; x < X; x++)
+      {
+        for (int y = 0; y < Y; y++)
+        {
+          d_img[x + y * X] = gray.at<uchar>(y, x);
+        }
+      }
+      double scale = 0.8;
+      double sigma_scale = 0.6;
+      double quant = 2.0;
+      double ang_th = 22.5;
+      double log_eps = 0.0;
+      double density_th = 0.7;
+      int n_bins = 1024;
+
+      double * edges;
+      edges = LineSegmentDetection(&n, d_img, X, Y, scale, sigma_scale, quant, ang_th, log_eps, density_th, n_bins, NULL, NULL, NULL);
+
+      for (int tp = 0; tp < (int) n; tp++)
+      {
+        cv::Vec4f line(
+                (float) edges[5 * tp],
+                (float) edges[5 * tp + 1],
+                (float) edges[5 * tp + 2],
+                (float) edges[5 * tp + 3]);
+        lines.push_back(line);
+      }
+      delete[] d_img;
+      delete[] edges;
+    }
+
+    /***/
+    void
+    edgeDetectionBoldLSD (cv::Mat& gray, std::vector<cv::Vec4f>& lines)
+    {
+      BoldLib::BOLD bold;
+
+      std::vector<int> isizes;
+      isizes.push_back(5);
+      bold.setK(isizes);
+      bold.setNumAngularBins(12);
+      bold.setScaleSpaceLevels(3);
+      bold.setScaleSpaceScaleFactor(1.6f);
+
+      BoldLib::Desc desc;
+      BoldLib::Keypoint* temp_keypoints;
+      int nkps = bold.extract(gray, temp_keypoints, desc);
+
+      float angle, x, y, med_x, med_y;
+      BoldLib::Keypoint boldKP;
+      for (int i = 0; i < nkps; i++)
+      {
+        cv::Vec4i line;
+        boldKP = temp_keypoints[i];
+        angle = -boldKP.orientation;
+        x = boldKP.x;
+        y = boldKP.y;
+        med_x = boldKP.scale * 0.5f * cos((angle) * M_PI / 180.0f);
+        med_y = boldKP.scale * 0.5f * sin((angle) * M_PI / 180.0f);
+        line.val[0] = x - med_x;
+        line.val[1] = y - med_y;
+        line.val[2] = x + med_x;
+        line.val[3] = y + med_y;
+        lines.push_back(line);
+      }
+    }
+
+    /**
      * Generic Edge Detection from Grayscale image
      * @param source
      * @param lines
@@ -60,40 +140,11 @@ namespace visy
       }
       if (method == VISY_TOOLS_EDGEDETECTION_METHOD_LSD)
       {
-        int n;
-        int X = gray.cols;
-        int Y = gray.rows;
-        double* d_img = (double *) malloc(X * Y * sizeof (double));
-
-        for (int x = 0; x < X; x++)
-        {
-          for (int y = 0; y < Y; y++)
-          {
-            d_img[x + y * X] = gray.at<uchar>(y, x);
-          }
-        }
-        double scale = 0.8;
-        double sigma_scale = 0.6;
-        double quant = 2.0;
-        double ang_th = 22.5;
-        double log_eps = 0.0;
-        double density_th = 0.7;
-        int n_bins = 1024;
-
-        double * edges;
-        edges = LineSegmentDetection(&n, d_img, X, Y, scale, sigma_scale, quant, ang_th, log_eps, density_th, n_bins, NULL, NULL, NULL);
-
-        for (int tp = 0; tp < (int) n; tp++)
-        {
-          cv::Vec4f line(
-                  (float) edges[5 * tp],
-                  (float) edges[5 * tp + 1],
-                  (float) edges[5 * tp + 2],
-                  (float) edges[5 * tp + 3]);
-          lines.push_back(line);
-        }
-        delete[] d_img;
-        delete[] edges;
+        edgeDetectionLSD(gray, lines);
+      }
+      else if (method == VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD)
+      {
+        edgeDetectionBoldLSD(gray, lines);
       }
     }
 

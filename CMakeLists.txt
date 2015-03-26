@@ -83,6 +83,7 @@ add_library(visy_descriptors
             src/descriptors/Descriptor.cpp
             src/descriptors/Bold3DDescriptorMultiBunch.cpp
             src/descriptors/dfunctions/DFunction.cpp
+            src/descriptors/dfunctions/DFunctionB2D.cpp
             src/descriptors/dfunctions/DFunctionB3DV1.cpp
             src/descriptors/dfunctions/DFunctionB3DV2.cpp
             src/descriptors/dfunctions/DFunctionB3DV1Multi.cpp

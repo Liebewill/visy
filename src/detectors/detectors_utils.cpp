@@ -28,11 +28,11 @@ namespace visy
        * @return 
        */
       Detector *
-      buildDetectorFromString (std::string detector_name, visy::Parameters* parameters)
+      buildDetectorFromString (std::string detector_name, visy::Parameters* parameters, bool is_model_detector)
       {
         bool use_occlusion_edges = false;
         if(parameters->getInt("occlusion")>=1){
-          use_occlusion_edges = true;
+          use_occlusion_edges = true && !is_model_detector;
         }
         std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
 

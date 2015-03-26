@@ -16,7 +16,7 @@ namespace visy {
 
         class Bold3DExtractor : public Extractor {
         public:
-            Bold3DExtractor(bool filter_occlusion = true,float zone_radius = 5.0f, float zone_slice = 2.0f,float area_normals_angular_th = 25.0f, float area_max_distance=0.001f);
+            Bold3DExtractor(bool filter_occlusion = true,float zone_radius = 5.0f, float zone_slice = 2.0f,float area_normals_angular_th = 25.0f, float area_max_distance=0.001f,int extraction_method = visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD);
             Bold3DExtractor(const Bold3DExtractor& orig);
             virtual ~Bold3DExtractor();
 
@@ -29,7 +29,7 @@ namespace visy {
             float area_slice;
             float area_normals_angular_th;
             float area_max_distance;
-
+            int extraction_method;
 
         };
 

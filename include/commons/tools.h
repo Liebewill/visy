@@ -45,6 +45,7 @@ namespace visy {
 
 
         static const int VISY_TOOLS_EDGEDETECTION_METHOD_LSD = 100;
+        static const int VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD = 101;
         
         /**
          * Distance from Point to Line
@@ -63,6 +64,20 @@ namespace visy {
          * @param method EDGE_DETECTION_METHOD
          */
         void edgeDetection(cv::Mat& source, std::vector<cv::Vec4f>& lines, int method = VISY_TOOLS_EDGEDETECTION_METHOD_LSD);
+        
+        /**
+         * Simple LSD detection
+         * @param gray
+         * @param lines
+         */
+        void edgeDetectionLSD(cv::Mat& gray, std::vector<cv::Vec4f>& lines);
+        
+        /**
+         * BOLD LSD with refinement and filtering
+         * @param gray
+         * @param lines
+         */
+        void edgeDetectionBoldLSD(cv::Mat& gray, std::vector<cv::Vec4f>& lines);
         
         /**
          * Gets PlaneCoefficient of Cloud
