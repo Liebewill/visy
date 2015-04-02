@@ -159,7 +159,7 @@ namespace visy
     void
     planeCoefficients (pcl::PointCloud<PointType>::Ptr cloud, std::vector<int>& indices, pcl::ModelCoefficients::Ptr coefficients, pcl::PointIndices::Ptr inliers, float distance_th)
     {
-      pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
+      pcl::SACSegmentation<PointType> seg;
       seg.setOptimizeCoefficients(true);
       seg.setModelType(pcl::SACMODEL_PLANE);
       seg.setMethodType(pcl::SAC_RANSAC);
@@ -276,7 +276,7 @@ namespace visy
      * @param image [OUTPUT] image
      */
     void
-    rgbFromCloud (pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cv::Mat & image)
+    rgbFromCloud (pcl::PointCloud<PointType>::Ptr cloud, cv::Mat & image)
     {
       //            image.create(cloud->height, cloud->width, CV_8UC3);
       image = cv::Mat::zeros(cloud->height, cloud->width, CV_8UC3);
@@ -300,7 +300,7 @@ namespace visy
      * @param indices [INPUT] selected indices
      */
     void
-    rgbFromCloud (pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cv::Mat& image, std::vector<int>& indices)
+    rgbFromCloud (pcl::PointCloud<PointType>::Ptr cloud, cv::Mat& image, std::vector<int>& indices)
     {
       //            image.create(cloud->height, cloud->width, CV_8UC3);
       image = cv::Mat::zeros(cloud->height, cloud->width, CV_8UC3);

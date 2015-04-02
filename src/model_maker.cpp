@@ -119,7 +119,7 @@ main (int argc, char** argv)
   dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud,model_pose, detector);
   
   
-  dataset.saveDescription(model.name, model_keypoints, model_descriptor,model_pose, detector->buildName());
+//  dataset.saveDescription(model.name, model_keypoints, model_descriptor,model_pose, detector->buildName());
 
 
 

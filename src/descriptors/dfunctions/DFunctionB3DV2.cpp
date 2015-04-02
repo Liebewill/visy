@@ -5,8 +5,7 @@
  * Created on 15 marzo 2015, 13.54
  */
 
-#include "dfunctions/DFunctionB3DV2.h"
-#include "signatures/Signature.h"
+#include "DFunctionB3DV2.h"
 
 namespace visy
 {

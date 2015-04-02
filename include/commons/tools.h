@@ -15,26 +15,16 @@
 
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
-#include <opencv2/legacy/legacy.hpp>
 
 #include <pcl/io/pcd_io.h>
-#include <pcl/common/common_headers.h>
-#include <pcl/common/centroid.h>
-#include <pcl/common/intersections.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/impl/point_types.hpp>
-#include <pcl/common/centroid.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/io/ply_io.h>
+
 
 #include "lsd.h"
 #include "commons.h"
@@ -134,9 +124,9 @@ namespace visy {
          * @param cloud input cloud
          * @param image OUT rgb image
          */
-        void rgbFromCloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cv::Mat& image);
+        void rgbFromCloud(pcl::PointCloud<PointType>::Ptr cloud, cv::Mat& image);
         
-        void rgbFromCloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cv::Mat& image, std::vector<int>& indices);
+        void rgbFromCloud(pcl::PointCloud<PointType>::Ptr cloud, cv::Mat& image, std::vector<int>& indices);
 
         void convertPoint3D(PointType &pt, Eigen::Vector3f &p, bool reverse = false);
 

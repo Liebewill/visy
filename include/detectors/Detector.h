@@ -8,23 +8,12 @@
 #ifndef DETECTOR_H
 #define	DETECTOR_H
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <boldlib.h>
 
-#include <pcl/common/common_headers.h>
-#include <pcl/common/centroid.h>
-#include <pcl/common/intersections.h>
+
 #include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/impl/point_types.hpp>
-#include <pcl/common/centroid.h>
 
 #include <extractors/Extractor.h>
 #include <descriptors/Descriptor.h>

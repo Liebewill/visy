@@ -60,6 +60,7 @@
 #include "Bold3DR2Detector.h"
 #include "Bold3DM2MultiDetector.h"
 #include "detectors/detectors_utils.h"
+#include "commons/commons.h"
 
 using namespace std;
 using namespace BoldLib;
@@ -80,154 +81,152 @@ visy::Parameters* parameters;
  *
  */
 int
-main (int argc, char** argv)
-{
-  pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
+main(int argc, char** argv) {
+    pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
-  /** PARAMETERS */
-  parameters = new visy::Parameters(argc, argv);
-  parameters->putFloat("gc_th");
-  parameters->putFloat("gc_size");
-  parameters->putString("detector");
-  parameters->putString("model");
-  parameters->putString("sizes");
-  parameters->putInt("set");
-  parameters->putInt("scene");
-  parameters->putInt("nbin");
-  parameters->putInt("occlusion");
+    /** PARAMETERS */
+    parameters = new visy::Parameters(argc, argv);
+    parameters->putFloat("gc_th");
+    parameters->putFloat("gc_size");
+    parameters->putString("detector");
+    parameters->putString("model");
+    parameters->putString("sizes");
+    parameters->putInt("set");
+    parameters->putInt("scene");
+    parameters->putInt("nbin");
+    parameters->putInt("occlusion");
 
-  int use_occlusion = false;
+    int use_occlusion = false;
 
-  visy::dataset::IrosDataset::init();
-  visy::dataset::Model model = visy::dataset::IrosDataset::findModelByName(parameters->getString("model"));
+    visy::dataset::IrosDataset::init();
+    visy::dataset::Model model = visy::dataset::IrosDataset::findModelByName(parameters->getString("model"));
 
-  visy::detectors::Detector * detector;
-  visy::detectors::Detector * detector_model;
+    visy::detectors::Detector * detector;
+    visy::detectors::Detector * detector_model;
 
-  detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, false);
-  detector_model = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, true);
+    detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, false);
+    detector_model = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, true);
 
-  //  std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
-  //
-  //
-  //
-  //  visy::detectors::Detector * detector;
-  //
-  //  if (parameters->getString("detector") == "BOLD3DM")
-  //  {
-  //    detector = new visy::detectors::Bold3DMDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
-  //  }
-  //  else if (parameters->getString("detector") == "BOLD3DM2")
-  //  {
-  //    detector = new visy::detectors::Bold3DM2Detector(sizes, parameters->getInt("nbin"), !use_occlusion);
-  //  }
-  //  else if (parameters->getString("detector") == "BOLD3DM2MULTI")
-  //  {
-  //    detector = new visy::detectors::Bold3DM2MultiDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
-  //  }
-  //  else if (parameters->getString("detector") == "BOLD3DR2")
-  //  {
-  //    detector = new visy::detectors::Bold3DR2Detector(sizes, parameters->getInt("nbin"), !use_occlusion);
-  //  }
-  //  else if (parameters->getString("detector") == "BOLD3DR")
-  //  {
-  //    detector = new visy::detectors::Bold3DRDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
-  //  }
-  //  else if (parameters->getString("detector") == "BOLD")
-  //  {
-  //    detector = new visy::detectors::BoldDetector(sizes);
-  //  }
+    //  std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
+    //
+    //
+    //
+    //  visy::detectors::Detector * detector;
+    //
+    //  if (parameters->getString("detector") == "BOLD3DM")
+    //  {
+    //    detector = new visy::detectors::Bold3DMDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD3DM2")
+    //  {
+    //    detector = new visy::detectors::Bold3DM2Detector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD3DM2MULTI")
+    //  {
+    //    detector = new visy::detectors::Bold3DM2MultiDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD3DR2")
+    //  {
+    //    detector = new visy::detectors::Bold3DR2Detector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD3DR")
+    //  {
+    //    detector = new visy::detectors::Bold3DRDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD")
+    //  {
+    //    detector = new visy::detectors::BoldDetector(sizes);
+    //  }
 
-  std::cout << "Detector: " << detector->buildName() << std::endl;
+    std::cout << "Detector: " << detector->buildName() << std::endl;
 
-  pcl::visualization::PCLVisualizer * viewer;
-  viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+    pcl::visualization::PCLVisualizer * viewer;
+    viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
 
-  visy::dataset::IrosDataset dataset;
-
-
-
-  std::vector<visy::extractors::KeyPoint3D> model_keypoints;
-  cv::Mat model_descriptor;
-  pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
-  pcl::PointCloud<PointType>::Ptr model_full_cloud(new pcl::PointCloud<PointType>());
-  cv::Mat model_rgb;
-  Eigen::Matrix4f model_pose;
-
-  dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector_model);
-
-
-  std::vector<visy::extractors::KeyPoint3D> scene_keypoints;
-  cv::Mat scene_descriptor;
-  cv::Mat scene_rgb, scene_rgb_full;
-  pcl::PointCloud<PointType>::Ptr scene_cloud(new pcl::PointCloud<PointType>());
-
-  visy::dataset::IrosDataset::loadScene(parameters->getInt("set"), parameters->getInt("scene"), scene_cloud, scene_rgb);
-
-  boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
-
-  detector->detect(scene_rgb, scene_cloud, scene_keypoints, scene_descriptor);
-
-  boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
-  boost::posix_time::time_duration duration(time_end - time_start);
-  cout << "Detector time: " << duration << '\n';
-
-  std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
-
-  visy::extractors::utils::modelSceneMatch(
-          model_keypoints,
-          scene_keypoints,
-          model_descriptor,
-          scene_descriptor,
-          rototranslations,
-          parameters->getFloat("gc_size"),
-          parameters->getFloat("gc_th")
-          );
+    visy::dataset::IrosDataset dataset;
 
 
 
+    std::vector<visy::extractors::KeyPoint3D> model_keypoints;
+    cv::Mat model_descriptor;
+    pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr model_full_cloud(new pcl::PointCloud<PointType>());
+    cv::Mat model_rgb;
+    Eigen::Matrix4f model_pose;
+
+    dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector_model);
 
 
-  std::cout << "FOUND:" << rototranslations.size() << std::endl;
+    std::vector<visy::extractors::KeyPoint3D> scene_keypoints;
+    cv::Mat scene_descriptor;
+    cv::Mat scene_rgb, scene_rgb_full;
+    pcl::PointCloud<PointType>::Ptr scene_cloud(new pcl::PointCloud<PointType>());
 
+    visy::dataset::IrosDataset::loadScene(parameters->getInt("set"), parameters->getInt("scene"), scene_cloud, scene_rgb);
+    boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
 
-  for (int i = 0; i < rototranslations.size(); i++)
-  {
-    pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
-    pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
-    std::stringstream ss;
-    ss << "Instance_" << i << "_cloud";
-    visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
-  }
+    detector->detect(scene_rgb, scene_cloud, scene_keypoints, scene_descriptor);
+    std::cout << "Model kps: " << model_keypoints.size() << std::endl;
+    std::cout << "Scene kps: " << scene_keypoints.size() << std::endl;
 
+    boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::time_duration duration(time_end - time_start);
+    cout << "Detector time: " << duration << '\n';
 
+    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
 
-  viewer->addPointCloud(scene_cloud, "scene");
-
-
-  //  visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, model_keypoints, cv::Scalar(0, 255, 0), "ciao", true);
-
-  //  for (int i = 0; i < rototranslations.size(); i++)
-  //  {
-  //    pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
-  //    pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
-  //    std::stringstream ss;
-  //    ss << "Instance_" << i << "_cloud";
-  //    visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
-  //  }
-
-  //  cv::namedWindow("out", cv::WINDOW_NORMAL);
-  //  cv::imshow("out", out);
-  //  cv::namedWindow("out_scene", cv::WINDOW_NORMAL);
-  //  cv::imshow("out_scene", out_scene);
-
-  while (!viewer->wasStopped())
-  {
-    cv::waitKey(100);
-    viewer->spinOnce();
-  }
+    visy::extractors::utils::modelSceneMatch(
+            model_keypoints,
+            scene_keypoints,
+            model_descriptor,
+            scene_descriptor,
+            rototranslations,
+            parameters->getFloat("gc_size"),
+            parameters->getFloat("gc_th")
+            );
 
 
 
-  return 1;
+
+
+    std::cout << "FOUND:" << rototranslations.size() << std::endl;
+    viewer->addPointCloud(scene_cloud, "scene");
+
+      for (int i = 0; i < rototranslations.size(); i++)
+      {
+        pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
+        pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
+        std::stringstream ss;
+        ss << "Instance_" << i << "_cloud";
+        visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
+      }
+
+
+
+
+
+    //  visy::extractors::KeyPoint3D::draw3DKeyPoints3D(*viewer, model_keypoints, cv::Scalar(0, 255, 0), "ciao", true);
+
+    //  for (int i = 0; i < rototranslations.size(); i++)
+    //  {
+    //    pcl::PointCloud<PointType>::Ptr model_projection(new pcl::PointCloud<PointType>());
+    //    pcl::transformPointCloud(*model_cloud, *model_projection, rototranslations[i]);
+    //    std::stringstream ss;
+    //    ss << "Instance_" << i << "_cloud";
+    //    visy::tools::displayCloud(*viewer, model_projection, 0, 255, 0, 3.0f, ss.str());
+    //  }
+
+    //  cv::namedWindow("out", cv::WINDOW_NORMAL);
+    //  cv::imshow("out", out);
+    //  cv::namedWindow("out_scene", cv::WINDOW_NORMAL);
+    //  cv::imshow("out_scene", out_scene);
+
+    while (!viewer->wasStopped()) {
+        cv::waitKey(100);
+        viewer->spinOnce();
+    }
+
+
+
+    return 1;
 }

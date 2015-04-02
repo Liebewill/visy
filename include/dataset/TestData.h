@@ -1,27 +1,33 @@
 /* 
- * File:   IrosDataset.h
+ * File:   TestData.h
  * Author: daniele
  *
- * Created on 20 novembre 2014, 23.19
+ * Created on March 31, 2015, 6:59 PM
  */
 
-#ifndef IROSDATASET_H
-#define	IROSDATASET_H
+#ifndef TESTDATA_H
+#define	TESTDATA_H
 
-#include <opencv2/opencv.hpp>
-
-#include <iostream>
-#include <stdio.h>
-#include <string>
-#include <fstream>
-
-#include "tools.h"
-#include "detectors/Detector.h"
-#include "Dataset.h"
+#include "extractors/KeyPoint3D.h"
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl-1.7/pcl/common/io.h>
+#include <pcl-1.7/pcl/common/transforms.h>
+#include "Detector.h"
 
 namespace visy {
     namespace dataset {
-
+        
+         struct PrecisionRecallRow {
+            int GC = -1;
+            int P = 0;
+            int N = 0;
+            int TP = 0;
+            int FP = 0;
+            int FN = 0;
+            int TN = 0;
+        };
+        
         struct Annotation {
             std::string model_name;
             int set_index;
@@ -120,7 +126,7 @@ namespace visy {
             }
         };
 
-        class IrosDataset : public Dataset {
+        class TestData  {
         public:
 
             static std::string BASE_PATH;
@@ -130,8 +136,8 @@ namespace visy {
             static std::vector<Model>* models;
             static std::vector<SetScene>* scenes;
 
-            IrosDataset();
-            virtual ~IrosDataset();
+            TestData();
+            virtual ~TestData();
             static void init();
             static void loadIndices(std::string path, std::vector<int>& indices);
             static void loadModel(std::string simpleName, int view_number, pcl::PointCloud<PointType>::Ptr full_model, pcl::PointCloud<PointType>::Ptr model, cv::Mat& rgb_model, Eigen::Matrix4f& pose);
@@ -156,5 +162,8 @@ namespace visy {
         };
     }
 }
-#endif	/* IROSDATASET_H */
+
+
+
+#endif	/* TESTDATA_H */
 

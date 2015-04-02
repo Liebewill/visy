@@ -8,7 +8,6 @@
 #ifndef HISTOGRAMND_H
 #define	HISTOGRAMND_H
 
-#include <math.h>
 #include <iostream>
 #include <stdio.h>
 #include <cmath>

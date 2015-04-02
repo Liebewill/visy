@@ -88,6 +88,8 @@ add_library(visy_descriptors
             src/descriptors/dfunctions/DFunctionB3DV2.cpp
             src/descriptors/dfunctions/DFunctionB3DV1Multi.cpp
             src/descriptors/dfunctions/DFunctionB3DV2Multi.cpp
+            src/descriptors/dfunctions/DFunctionFPFH.cpp
+            src/descriptors/dfunctions/DFunctionB3D4H.cpp
             src/descriptors/descriptors_utils.cpp
             )
 target_link_libraries (visy_descriptors ${PCL_LIBRARIES})
@@ -106,6 +108,7 @@ add_library(visy_detectors
             src/detectors/Bold3DR2MultiDetector.cpp
             src/detectors/BoldDetector.cpp
             src/detectors/Bold3DXDetector.cpp
+            src/detectors/HybridDetector.cpp
             src/detectors/detectors_utils.cpp
             )
 target_link_libraries (visy_detectors ${PCL_LIBRARIES})
@@ -121,6 +124,7 @@ target_link_libraries (visy_detectors visy_descriptors)
 add_library(visy_dataset 
     src/dataset/Dataset.cpp
     src/dataset/IrosDataset.cpp
+    src/dataset/TestData.cpp
 )
 target_link_libraries (visy_dataset ${PCL_LIBRARIES})
 target_link_libraries (visy_dataset ${OpenCV_LIBS})

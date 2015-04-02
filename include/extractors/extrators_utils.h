@@ -5,8 +5,8 @@
  * Created on 9 marzo 2015, 21.43
  */
 
-#ifndef UTILS_H
-#define	UTILS_H
+#ifndef EXTRACTORS_UTILS_H
+#define	EXTRACTORS_UTILS_H
 
 #include <cstdlib>
 #include <iostream>
@@ -14,11 +14,7 @@
 #include <string>
 
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/legacy/legacy.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/common_headers.h>
@@ -27,12 +23,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/visualization/cloud_viewer.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/impl/point_types.hpp>
-#include <pcl/common/centroid.h>
+
 #include <pcl/recognition/cg/geometric_consistency.h>
 
 #include "KeyPoint3D.h"
@@ -162,5 +153,5 @@ namespace visy {
     }
 }
 
-#endif	/* UTILS_H */
+#endif	/* EXTRACTORS_UTILS_H */
 

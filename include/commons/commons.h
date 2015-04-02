@@ -8,7 +8,9 @@
 #ifndef COMMONS_H
 #define	COMMONS_H
 
-typedef pcl::PointXYZRGBA PointType;
+#include <pcl/point_types.h>
+
+typedef pcl::PointXYZRGB PointType;
 typedef pcl::Normal NormalType;
 typedef pcl::ReferenceFrame RFType;
 typedef pcl::SHOT352 DescriptorType;
