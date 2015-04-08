@@ -89,7 +89,9 @@ add_library(visy_descriptors
             src/descriptors/dfunctions/DFunctionB3DV1Multi.cpp
             src/descriptors/dfunctions/DFunctionB3DV2Multi.cpp
             src/descriptors/dfunctions/DFunctionFPFH.cpp
+            src/descriptors/dfunctions/DFunctionFPFH2.cpp
             src/descriptors/dfunctions/DFunctionB3D4H.cpp
+            src/descriptors/dfunctions/DFunctionB3DZ.cpp
             src/descriptors/descriptors_utils.cpp
             )
 target_link_libraries (visy_descriptors ${PCL_LIBRARIES})

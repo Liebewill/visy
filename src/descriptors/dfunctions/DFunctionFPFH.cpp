@@ -24,7 +24,7 @@ namespace visy {
             cv::Point3f n1 = kp1.direction_z;
             cv::Point3f n2 = kp2.direction_z;
             cv::Point3f d = kp2.pt3D - kp1.pt3D;
-            float d_len = d.dot(d);
+            float d_len = sqrt(d.dot(d));
 
             cv::Point3f u = n1;
             cv::Point3f v = d.cross(u);
@@ -45,7 +45,6 @@ namespace visy {
             val[0] = alpha_c * (180 / M_PI);
             val[1] = beta_c * (180 / M_PI);
             val[2] = gamma_c * (180 / M_PI);
-
             *results = val;
         }
 
