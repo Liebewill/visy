@@ -92,6 +92,7 @@ add_library(visy_descriptors
             src/descriptors/dfunctions/DFunctionFPFH2.cpp
             src/descriptors/dfunctions/DFunctionB3D4H.cpp
             src/descriptors/dfunctions/DFunctionB3DZ.cpp
+            src/descriptors/dfunctions/DFunctionPPF.cpp
             src/descriptors/descriptors_utils.cpp
             )
 target_link_libraries (visy_descriptors ${PCL_LIBRARIES})
@@ -209,9 +210,38 @@ target_link_libraries(
 )
 
 #MATCHER
+add_executable(match_hv src/match_hv.cpp)
+target_link_libraries(
+    match_hv
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
+
+#MATCHER
 add_executable(results src/results.cpp)
 target_link_libraries(
     results
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
+
+
+#PLY
+add_executable(ply_to_pcd src/ply_to_pcd.cpp)
+target_link_libraries(
+    ply_to_pcd
     ${PCL_LIBRARIES} 
     ${BOLD_LIBRARIES} 
     ${OpenCV_LIBS} 

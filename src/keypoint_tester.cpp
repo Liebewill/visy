@@ -36,7 +36,7 @@
 #include <pcl/recognition/cg/geometric_consistency.h>
 #include <pcl/common/transforms.h>
 #include <pcl/features/integral_image_normal.h>
-
+#include "detectors/detectors_utils.h"
 
 #include <sstream>
 #include <string>
@@ -186,76 +186,91 @@ int
 main (int argc, char** argv)
 {
 
-  pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
+ pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
-  parameters = new visy::Parameters(argc, argv);
-  parameters->putString("bunch_method");
-  parameters->putFloat("radius");
-  parameters->putFloat("size");
+    /** PARAMETERS */
+    parameters = new visy::Parameters(argc, argv);
+    parameters->putFloat("gc_th");
+    parameters->putFloat("gc_size");
+    parameters->putString("detector");
+    parameters->putString("model");
+    parameters->putString("sizes");
+    parameters->putInt("set");
+    parameters->putInt("scene");
+    parameters->putInt("nbin");
+    parameters->putInt("occlusion");
 
+    int use_occlusion = false;
 
-  //  cv::Mat model_rgb, model_rgb_full;
-  //  pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
-  //  pcl::PointCloud<PointType>::Ptr model_cloud_full(new pcl::PointCloud<PointType>());
-  //  Eigen::Matrix4f model_pose;
-  //
-  //  //LOAD MODEL
-  //  visy::dataset::IrosDataset::loadModel(
-  //          "asus_box", 1,
-  //          model_cloud_full, model_cloud,
-  //          model_rgb, model_rgb_full,
-  //          model_pose);
+    visy::dataset::IrosDataset::init();
+    visy::dataset::Model model = visy::dataset::IrosDataset::findModelByName(parameters->getString("model"));
 
+    visy::detectors::Detector * detector;
+    visy::detectors::Detector * detector_model;
 
+    detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, false);
+    detector_model = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, true);
 
+    //  std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
+    //
+    //
+    //
+    //  visy::detectors::Detector * detector;
+    //
+    //  if (parameters->getString("detector") == "BOLD3DM")
+    //  {
+    //    detector = new visy::detectors::Bold3DMDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD3DM2")
+    //  {
+    //    detector = new visy::detectors::Bold3DM2Detector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD3DM2MULTI")
+    //  {
+    //    detector = new visy::detectors::Bold3DM2MultiDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD3DR2")
+    //  {
+    //    detector = new visy::detectors::Bold3DR2Detector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD3DR")
+    //  {
+    //    detector = new visy::detectors::Bold3DRDetector(sizes, parameters->getInt("nbin"), !use_occlusion);
+    //  }
+    //  else if (parameters->getString("detector") == "BOLD")
+    //  {
+    //    detector = new visy::detectors::BoldDetector(sizes);
+    //  }
 
+    std::cout << "Detector: " << detector->buildName() << std::endl;
 
-  visy::dataset::IrosDataset::loadScene(14, 6, scene_cloud, scene_rgb);
+    pcl::visualization::PCLVisualizer * viewer;
+    viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
 
-  //  visy::dataset::IrosDataset::loadModel(
-  //          "asus_box", 2,
-  //          scene_cloud, scene_cloud_full,
-  //          scene_rgb_full, scene_rgb,
-  //          scene_pose);
-
-
-  std::vector<float> sizes;
-  sizes.push_back(search_size);
-  //  sizes.push_back(10);
-  //  sizes.push_back(15);
-  //  sizes.push_back(20);
-  //  sizes.push_back(25);
-  //  sizes.push_back(30);
-
-  std::vector<float> radiuses;
-  //  radiuses.push_back(0.001f);
-  radiuses.push_back(search_radius);
-  //  radiuses.push_back(0.1f);
-
-  visy::detectors::Detector * detector;
-
-
-  if (parameters->getString("bunch_method")=="knn")
-  {
-    detector = new visy::detectors::Bold3DMDetector(sizes, 8, true);
-  }
-  else if (parameters->getString("bunch_method")=="radius")
-  {
-    detector = new visy::detectors::Bold3DRDetector(radiuses, 8, true);
-  }
-
-  std::cout << "USING DETECTOR: " << detector->buildName() << std::endl;
-
-  detector->detect(scene_rgb, scene_cloud, scene_keypoints, scene_descriptor);
-
-
-  viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
-  viewer->addPointCloud(scene_cloud, "scene");
-  cv::namedWindow("out", cv::WINDOW_NORMAL);
-  cv::setMouseCallback("out", CallBackFunc, NULL);
+    visy::dataset::IrosDataset dataset;
 
 
-  redraw();
+
+    std::vector<visy::extractors::KeyPoint3D> model_keypoints;
+    cv::Mat model_descriptor;
+    pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr model_full_cloud(new pcl::PointCloud<PointType>());
+    cv::Mat model_rgb;
+    Eigen::Matrix4f model_pose;
+
+    dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector_model);
+
+
+    std::vector<visy::extractors::KeyPoint3D> scene_keypoints;
+    cv::Mat scene_descriptor;
+    cv::Mat scene_rgb, scene_rgb_full;
+    pcl::PointCloud<PointType>::Ptr scene_cloud(new pcl::PointCloud<PointType>());
+
+    visy::dataset::IrosDataset::loadScene(parameters->getInt("set"), parameters->getInt("scene"), scene_cloud, scene_rgb);
+    
+    viewer->addPointCloud(scene_cloud,"scene");
+    
+
   while (!viewer->wasStopped())
   {
     cv::waitKey(100);

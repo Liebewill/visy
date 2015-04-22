@@ -384,6 +384,14 @@ namespace visy
       viewer.addPointCloud(cloud, cloud_color, name);
       viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, size, name);
     }
+    
+    void
+    displayCloud (pcl::visualization::PCLVisualizer &viewer, pcl::PointCloud<PointType>::ConstPtr cloud, int r, int g, int b, int size, std::string name)
+    {
+      pcl::visualization::PointCloudColorHandlerCustom<PointType> cloud_color(cloud, r, g, b);
+      viewer.addPointCloud(cloud, cloud_color, name);
+      viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, size, name);
+    }
 
     void
     display4DHistogram (pcl::visualization::PCLVisualizer& viewer, std::string name, float* histogram, int size, int& viewport)

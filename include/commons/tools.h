@@ -133,6 +133,8 @@ namespace visy {
         void draw3DVector(pcl::visualization::PCLVisualizer &viewer, Eigen::Vector3f start, Eigen::Vector3f end, float r, float g, float b, std::string name);
 
         void displayCloud(pcl::visualization::PCLVisualizer &viewer, pcl::PointCloud<PointType>::Ptr cloud, int r, int g, int b, int size, std::string name);
+        
+        void displayCloud(pcl::visualization::PCLVisualizer &viewer, pcl::PointCloud<PointType>::ConstPtr cloud, int r, int g, int b, int size, std::string name);
 
         void display4DHistogram(pcl::visualization::PCLVisualizer& viewer, std::string name, float* histogram, int size, int& viewport);
 
