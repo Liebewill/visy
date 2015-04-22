@@ -22,13 +22,7 @@
 namespace visy {
     namespace dataset {
 
-        struct Annotation {
-            std::string model_name;
-            int set_index;
-            int scene_index;
-            Eigen::Matrix4f pose;
-            float occlusion;
-        };
+        
 
         struct Hit {
             bool bad = false;
@@ -39,26 +33,7 @@ namespace visy {
             float rotation_error;
         };
 
-        struct Model {
-            std::string name;
-            int n_views;
-
-            Model(std::string name, int n_views) {
-                this->name = name;
-                this->n_views = n_views;
-            }
-
-        };
-
-        struct SetScene {
-            int set_number;
-            int scene_number;
-
-            SetScene(int set, int scene) {
-                set_number = set;
-                scene_number = scene;
-            }
-        };
+        
 
         struct ResultSceneView {
             std::string model_name = "";

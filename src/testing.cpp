@@ -14,22 +14,13 @@
 
 #include <pcl/common/common_headers.h>
 #include <pcl/point_cloud.h>
-
+#include "detectors/detectors_utils.h"
 #include "Parameters.h"
-#include "TestData.h"
+#include "WillowDataset.h"
 
 using namespace std;
 using namespace BoldLib;
 
-
-/*
-LineSegmentDetection( int * n_out,
-double * img, int X, int Y,
-double scale, double sigma_scale, double quant,
-double ang_th, double log_eps, double density_th,
-int n_bins,
-int ** reg_img, int * reg_x, int * reg_y );
- */
 
 visy::Parameters* parameters;
 pcl::visualization::PCLVisualizer * viewer;
@@ -39,24 +30,90 @@ pcl::visualization::PCLVisualizer * viewer;
  */
 int
 main(int argc, char** argv) {
-    pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene(new pcl::PointCloud<pcl::PointXYZRGB>());
-    if (pcl::io::loadPCDFile("/home/daniele/iros_dataset/test_set/set_00005/00001.pcd", *scene) < 0) {
-        std::cout << "Error loading cloud." << std::endl;
+    /** PARAMETERS */
+    parameters = new visy::Parameters(argc, argv);
+    parameters->putFloat("gc_th");
+    parameters->putFloat("gc_size");
+    parameters->putString("detector");
+    parameters->putString("model");
+    parameters->putString("sizes");
+    parameters->putInt("set");
+    parameters->putInt("scene");
+    parameters->putInt("nbin");
+    parameters->putInt("occlusion");
+
+    visy::detectors::Detector * detector;
+    detector = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, false);
+
+
+    visy::dataset::WillowDataset dataset;
+
+    dataset.init();
+
+    for (int i = 0; i < dataset.scenes->size(); i++) {
+        visy::dataset::SetScene set = dataset.scenes->at(i);
+        
+        for (int j= 0; j <= set.scene_number; j++) {
+
+
+            std::vector<visy::extractors::KeyPoint3D> scene_keypoints;
+            cv::Mat scene_descriptor;
+            cv::Mat scene_rgb, scene_rgb_full;
+            pcl::PointCloud<PointType>::Ptr scene_cloud(new pcl::PointCloud<PointType>());
+
+            dataset.loadScene(set.set_number, j, scene_cloud, scene_rgb);
+
+//            viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+//            viewer->addPointCloud(scene_cloud, "cloud");
+//
+//            while (!viewer->wasStopped()) {
+//                viewer->spinOnce();
+//            }
+        }
     }
 
-    pcl::visualization::PCLVisualizer * viewer;
-    viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+    return 0;
 
-    viewer->addPointCloud(scene, "scene2");
-    
-    while(!viewer->wasStopped()){
-        viewer->spinOnce();
-    }
-    //  visy::extractors::KeyPoint3D kp3d;
+    //    for (int i = 0; i < dataset.models->size(); i++) {
+    //        visy::dataset::Model model = dataset.models->at(i);
+    //
+    //
+    //        std::vector<visy::extractors::KeyPoint3D> model_keypoints;
+    //        cv::Mat model_descriptor;
+    //        pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
+    //        pcl::PointCloud<PointType>::Ptr model_cloud_filtered(new pcl::PointCloud<PointType>());
+    //        pcl::PointCloud<PointType>::Ptr model_full_cloud(new pcl::PointCloud<PointType>());
+    //        cv::Mat model_rgb, model_rgb_full;
+    //        Eigen::Matrix4f model_pose;
+    //
+    //
+    //        std::cout << model.name << " " << model.n_views << std::endl;
+    //
+    //        dataset.fetchFullModel(model.name, model.n_views, model_keypoints, model_descriptor, model_cloud, model_pose, detector);
+    //        //        dataset.loadModel(
+    //        //                model.name,
+    //        //                model.n_views,
+    //        //                model_full_cloud,
+    //        //                model_cloud,
+    //        //                model_rgb,
+    //        //                model_rgb_full,
+    //        //                model_pose
+    //        //                );
+    //
+    //        viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+    //        viewer->addPointCloud(model_cloud, "cloud");
+    //
+    //        while (!viewer->wasStopped()) {
+    //            viewer->spinOnce();
+    //        }
+    //    }
+    //    dataset.loadModel(
+    //            model.name,
+    //            model.n_views,
+    //            model_cloud,
+    //            )
 
-//    visy::dataset::TestData dataset;
-    std::cout << "OK" << std::endl;
+
     return 0;
 }

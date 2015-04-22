@@ -127,7 +127,8 @@ target_link_libraries (visy_detectors visy_descriptors)
 add_library(visy_dataset 
     src/dataset/Dataset.cpp
     src/dataset/IrosDataset.cpp
-    src/dataset/TestData.cpp
+    src/dataset/WillowDataset.cpp
+    
 )
 target_link_libraries (visy_dataset ${PCL_LIBRARIES})
 target_link_libraries (visy_dataset ${OpenCV_LIBS})
