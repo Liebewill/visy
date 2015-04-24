@@ -132,7 +132,7 @@ namespace visy {
          * @param max_iterations
          * @param max_distance
          */
-        void registerInstances(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& instances, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances, int max_iterations = 5, float max_distance = 0.005f);
+        void registerInstances(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& instances, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances,std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& registered_transforms, int max_iterations = 5, float max_distance = 0.005f);
 
         /**
          * GO Hypotheses Verification 
@@ -141,7 +141,8 @@ namespace visy {
          * @param hypotheses_mask
          * @param inlier_threshold
          */    
-        void hypothesesVerification(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances,std::vector<bool>& hypotheses_mask,float inlier_threshold = 0.015f);
+        void hypothesesVerification(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances,std::vector<bool>& hypotheses_mask,float inlier_threshold = 0.015f,float occlusion_threshold = 0.01f,float regularizer = 3.0f,float radius_clutter=0.03f,float clutter_regularizer = 5.0f,bool detect_clutter = true,float radius_normal = 0.05f);
+        
         
         /**
          * RGB image from registered CLOUD

@@ -63,6 +63,7 @@
 #include "detectors/detectors_utils.h"
 #include "commons/commons.h"
 #include "WillowDataset.h"
+#include "PipeLine.h"
 
 using namespace std;
 using namespace BoldLib;
@@ -117,7 +118,7 @@ main(int argc, char** argv) {
     /** DATASET */
     visy::dataset::WillowDataset dataset;
     dataset.init();
-    
+
     /** MODEL */
     visy::dataset::Model model = dataset.findModelByName(parameters->getString("model"));
     std::vector<visy::extractors::KeyPoint3D> model_keypoints;
@@ -140,13 +141,13 @@ main(int argc, char** argv) {
     int set_number = parameters->getInt("set");
     int scene_number = parameters->getInt("scene");
     std::vector<visy::dataset::Annotation> annotations;
-    dataset.loadScene(set_number,scene_number, scene_cloud, scene_rgb);
-    dataset.loadAnnotiationsFromSceneFile(model.name,set_number,scene_number,annotations);
-    
-    
-    
-    
-    
+    dataset.loadScene(set_number, scene_number, scene_cloud, scene_rgb);
+    dataset.loadAnnotiationsFromSceneFile(model.name, set_number, scene_number, annotations);
+
+
+
+
+
     /** DETECTION */
     boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
     detector->detect(scene_rgb, scene_cloud, scene_keypoints, scene_descriptor);
@@ -157,80 +158,61 @@ main(int argc, char** argv) {
     cout << "Detector time: " << duration << '\n';
 
     /** MODEL-SCENE MATCH */
-    
-    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
 
-    visy::extractors::utils::modelSceneMatch(
+    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
+    std::vector<pcl::PointCloud<PointType>::ConstPtr> instances;
+    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > registered_rototranslations;
+    std::vector<pcl::PointCloud<PointType>::ConstPtr> registered_instances;
+    std::vector<bool> hypotheses_mask; // Mask Vector to identify positive hypotheses
+
+    visy::pipes::PipeParameters pipeParameters;
+    visy::pipes::PipeLine pipe(detector, pipeParameters);
+
+    /** PIPE TRAIN */
+    pipe.train(
+            model_cloud,
+            scene_cloud,
             model_keypoints,
             scene_keypoints,
             model_descriptor,
             scene_descriptor,
+            model_cloud_filtered,
+            scene_cloud_filtered);
+
+    /** PIPE RUN*/
+    pipeParameters.gc_th = parameters->getFloat("gc_th");
+    pipe.run(
+            instances,
+            registered_instances,
             rototranslations,
-            parameters->getFloat("gc_size"),
-            parameters->getFloat("gc_th")
-            );
+            registered_rototranslations,
+            hypotheses_mask);
 
-    std::cout << "FOUND:" << rototranslations.size() << std::endl;
-    
-    /**
-     * Downsampling Model Cloud
-     */
-    visy::tools::cloudDownsample(model_cloud,model_cloud_filtered,parameters->getFloat("down"));
-    visy::tools::cloudDownsample(scene_cloud,scene_cloud_filtered,parameters->getFloat("down"));
-    viewer->addPointCloud(scene_cloud_filtered, "scene");
-    
-    /**
-     * Generates clouds for each instances found 
-     */
-    std::vector<pcl::PointCloud<PointType>::ConstPtr> instances;
 
-    for (size_t i = 0; i < rototranslations.size(); ++i) {
-        pcl::PointCloud<PointType>::Ptr rotated_model(new pcl::PointCloud<PointType> ());
-        pcl::transformPointCloud(*model_cloud_filtered, *rotated_model, rototranslations[i]);
-        instances.push_back(rotated_model);
-    }
 
-    /**
-     * ICP
-     */
-    std::vector<pcl::PointCloud<PointType>::ConstPtr> registered_instances;
-    visy::tools::registerInstances(scene_cloud_filtered,instances,registered_instances,5,0.005f);
-    
-
-    /**
-     * Hypothesis Verification
-     */
-    cout << "--- Hypotheses Verification ---" << endl;
-    std::vector<bool> hypotheses_mask; // Mask Vector to identify positive hypotheses
-    visy::tools::hypothesesVerification(scene_cloud_filtered,registered_instances,hypotheses_mask,0.015f);
-
-    for (int i = 0; i < hypotheses_mask.size(); i++) {
-        if (hypotheses_mask[i]) {
-            cout << "Instance " << i << " is GOOD! <---" << endl;
-        }
-    }
-    cout << "-------------------------------" << endl;
-
-    
     /** DISPLAY */
-    
+
+    viewer->addPointCloud(scene_cloud_filtered, "scene");
+
     for (int i = 0; i < registered_instances.size(); i++) {
         std::stringstream ss;
         ss << "Instance_" << i << "_cloud";
         if (hypotheses_mask[i]) {
 
+            visy::tools::displayCloud(*viewer, instances[i], 0, 255, 255, 3.0f, ss.str());
+            ss << "_reg";
             visy::tools::displayCloud(*viewer, registered_instances[i], 0, 255, 0, 3.0f, ss.str());
-            
-            Eigen::Matrix4f p = model_pose*rototranslations[i];
-            std::cout << "Good:\n"<<p<<std::endl;
+
+            Eigen::Matrix4f p = rototranslations[i] * model_pose;
+            std::cout << "Good:\n" << p << std::endl;
         } else {
 
             visy::tools::displayCloud(*viewer, registered_instances[i], 255, 0, 0, 3.0f, ss.str());
         }
     }
-    
-    for(int a = 0; a < annotations.size(); a++){
-        std::cout << annotations[a].model_name<<"\n"<<annotations[a].pose<<std::endl;
+
+    for (int a = 0; a < annotations.size(); a++) {
+        std::cout << annotations[a].model_name << "\n" << annotations[a].pose << std::endl;
     }
 
     while (!viewer->wasStopped()) {

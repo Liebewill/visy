@@ -562,7 +562,7 @@ namespace visy {
             pcl::copyPointCloud(*cloud, sampled_indices.points, *cloud_filtered);
         }
 
-        void registerInstances(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& instances, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances, int max_iterations, float max_distance) {
+        void registerInstances(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& instances, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances,std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& registered_transforms, int max_iterations, float max_distance) {
 
             for (size_t i = 0; i < instances.size(); ++i) {
                 pcl::IterativeClosestPoint<PointType, PointType> icp;
@@ -572,6 +572,7 @@ namespace visy {
                 icp.setInputSource(instances[i]);
                 pcl::PointCloud<PointType>::Ptr registered(new pcl::PointCloud<PointType>);
                 icp.align(*registered);
+                registered_transforms.push_back(icp.getFinalTransformation());
                 registered_instances.push_back(registered);
                 cout << "Instance " << i << " ";
                 if (icp.hasConverged()) {
@@ -582,7 +583,7 @@ namespace visy {
             }
         }
 
-        void hypothesesVerification(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances, std::vector<bool>& hypotheses_mask, float inlier_threshold) {
+        void hypothesesVerification(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances, std::vector<bool>& hypotheses_mask, float inlier_threshold,float occlusion_threshold,float regularizer,float radius_clutter,float clutter_regularizer,bool detect_clutter,float radius_normal) {
 
             pcl::GlobalHypothesesVerification<PointType, PointType> GoHv;
 
@@ -590,12 +591,12 @@ namespace visy {
             GoHv.addModels(registered_instances, true); //Models to verify
 
             GoHv.setInlierThreshold(inlier_threshold);
-            GoHv.setOcclusionThreshold(0.01f);
-            GoHv.setRegularizer(3.0f);
-            GoHv.setRadiusClutter(0.03f);
-            GoHv.setClutterRegularizer(5.0f);
-            GoHv.setDetectClutter(true);
-            GoHv.setRadiusNormals(0.05f);
+            GoHv.setOcclusionThreshold(occlusion_threshold);
+            GoHv.setRegularizer(regularizer);
+            GoHv.setRadiusClutter(radius_clutter);
+            GoHv.setClutterRegularizer(clutter_regularizer);
+            GoHv.setDetectClutter(detect_clutter);
+            GoHv.setRadiusNormals(radius_normal);
 
             GoHv.verify();
             GoHv.getMask(hypotheses_mask);

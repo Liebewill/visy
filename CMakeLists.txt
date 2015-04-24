@@ -51,6 +51,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/descriptors/dfunctions
     ${CMAKE_CURRENT_SOURCE_DIR}/include/detectors 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/dataset 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/pipes 
     ${CMAKE_CURRENT_SOURCE_DIR})
 
 #VISY COMMONS
@@ -120,6 +121,19 @@ target_link_libraries (visy_detectors ${BOLD_LIBRARIES})
 target_link_libraries (visy_detectors visy_commons)
 target_link_libraries (visy_detectors visy_extractors)
 target_link_libraries (visy_detectors visy_descriptors)
+
+
+#VISY PIPES
+add_library(visy_pipes
+            src/pipes/PipeLine.cpp
+            )
+target_link_libraries (visy_pipes ${PCL_LIBRARIES})
+target_link_libraries (visy_pipes ${OpenCV_LIBS})
+target_link_libraries (visy_pipes ${BOLD_LIBRARIES})
+target_link_libraries (visy_pipes visy_commons)
+target_link_libraries (visy_pipes visy_extractors)
+target_link_libraries (visy_pipes visy_descriptors)
+target_link_libraries (visy_pipes visy_detectors)
 
 
 
@@ -222,6 +236,7 @@ target_link_libraries(
     visy_descriptors
     visy_detectors
     visy_dataset
+    visy_pipes
 )
 
 #MATCHER
@@ -238,19 +253,5 @@ target_link_libraries(
     visy_dataset
 )
 
-
-#PLY
-add_executable(ply_to_pcd src/ply_to_pcd.cpp)
-target_link_libraries(
-    ply_to_pcd
-    ${PCL_LIBRARIES} 
-    ${BOLD_LIBRARIES} 
-    ${OpenCV_LIBS} 
-    visy_commons 
-    visy_extractors
-    visy_descriptors
-    visy_detectors
-    visy_dataset
-)
 
 
