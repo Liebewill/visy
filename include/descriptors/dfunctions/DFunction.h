@@ -27,6 +27,7 @@ namespace visy {
         protected:
             int size;
             Signature* signature;
+            bool sparse;
         };
     }
 }

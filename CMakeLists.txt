@@ -239,7 +239,7 @@ target_link_libraries(
     visy_pipes
 )
 
-#MATCHER
+#RESULTS
 add_executable(results src/results.cpp)
 target_link_libraries(
     results
@@ -255,3 +255,17 @@ target_link_libraries(
 
 
 
+#RESULTS_HV
+add_executable(results_hv src/results_hv.cpp)
+target_link_libraries(
+    results_hv
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+    visy_pipes
+)

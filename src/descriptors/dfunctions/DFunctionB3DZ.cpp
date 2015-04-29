@@ -11,6 +11,7 @@ namespace visy {
 
         DFunctionB3DZ::DFunctionB3DZ(int n_bins, bool multi) {
             this->size = 3;
+            this->sparse = multi;
             this->signature = new Signature(3, 180.0f, n_bins, multi);
         }
 
@@ -48,7 +49,12 @@ namespace visy {
 
         std::string
         DFunctionB3DZ::buildStringImpl() {
-            return "B3DZ";
+            std::stringstream ss;
+            ss << "B3DZ";
+            if(this->sparse){
+                ss<<"_MULTI";
+            }
+            return ss.str();
         }
     }
 }

@@ -562,8 +562,9 @@ namespace visy {
             pcl::copyPointCloud(*cloud, sampled_indices.points, *cloud_filtered);
         }
 
-        void registerInstances(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& instances, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances,std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& registered_transforms, int max_iterations, float max_distance) {
+        void registerInstances(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& instances, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances, std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& registered_transforms, int max_iterations, float max_distance) {
 
+            cout << "ICP: ";
             for (size_t i = 0; i < instances.size(); ++i) {
                 pcl::IterativeClosestPoint<PointType, PointType> icp;
                 icp.setMaximumIterations(max_iterations);
@@ -574,16 +575,18 @@ namespace visy {
                 icp.align(*registered);
                 registered_transforms.push_back(icp.getFinalTransformation());
                 registered_instances.push_back(registered);
-                cout << "Instance " << i << " ";
+
                 if (icp.hasConverged()) {
-                    cout << "Aligned!" << endl;
+                    cout << "#";
                 } else {
-                    cout << "Not Aligned!" << endl;
+                    cout << "0";
                 }
+
             }
+            cout << endl;
         }
 
-        void hypothesesVerification(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances, std::vector<bool>& hypotheses_mask, float inlier_threshold,float occlusion_threshold,float regularizer,float radius_clutter,float clutter_regularizer,bool detect_clutter,float radius_normal) {
+        void hypothesesVerification(pcl::PointCloud<PointType>::Ptr reference_cloud, std::vector<pcl::PointCloud<PointType>::ConstPtr>& registered_instances, std::vector<bool>& hypotheses_mask, float inlier_threshold, float occlusion_threshold, float regularizer, float radius_clutter, float clutter_regularizer, bool detect_clutter, float radius_normal) {
 
             pcl::GlobalHypothesesVerification<PointType, PointType> GoHv;
 

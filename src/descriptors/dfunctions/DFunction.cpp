@@ -16,6 +16,7 @@ namespace visy
     {
       this->size = -1;
       this->signature = NULL;
+      this->sparse = false;
     }
 
     DFunction::~DFunction ()

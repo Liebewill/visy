@@ -64,7 +64,8 @@ namespace visy {
                     registered_transforms,
                     this->pipeParameters.icp_max_iterations,
                     this->pipeParameters.icp_max_distance);
-
+            
+//            registered_instances = instances;
             /**
              * Hypothesis Verification
              */

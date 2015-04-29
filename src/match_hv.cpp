@@ -92,6 +92,7 @@ main(int argc, char** argv) {
     parameters->putFloat("gc_th");
     parameters->putFloat("gc_size");
     parameters->putFloat("down");
+    parameters->putString("dataset");
     parameters->putString("detector");
     parameters->putString("model");
     parameters->putString("sizes");
@@ -116,8 +117,8 @@ main(int argc, char** argv) {
 
 
     /** DATASET */
-    visy::dataset::WillowDataset dataset;
-    dataset.init();
+    std::cout << "Building Dataset: "<<parameters->getString("dataset")<<std::endl;
+    visy::dataset::WillowDataset dataset(parameters->getString("dataset"));
 
     /** MODEL */
     visy::dataset::Model model = dataset.findModelByName(parameters->getString("model"));
@@ -167,8 +168,11 @@ main(int argc, char** argv) {
 
     visy::pipes::PipeParameters pipeParameters;
     visy::pipes::PipeLine pipe(detector, pipeParameters);
-
+    
     /** PIPE TRAIN */
+    pipe.pipeParameters.downsampling_leaf = parameters->getFloat("down");
+     pipe.pipeParameters.gc_th = parameters->getFloat("gc_th");
+    
     pipe.train(
             model_cloud,
             scene_cloud,
@@ -180,7 +184,7 @@ main(int argc, char** argv) {
             scene_cloud_filtered);
 
     /** PIPE RUN*/
-    pipeParameters.gc_th = parameters->getFloat("gc_th");
+   
     pipe.run(
             instances,
             registered_instances,

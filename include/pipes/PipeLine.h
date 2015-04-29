@@ -22,7 +22,7 @@ namespace visy {
             std::string downsampling_method = "uniform";
             float downsampling_leaf = 0.005f;
             //
-            int icp_max_iterations = 15;
+            int icp_max_iterations = 10;
             float icp_max_distance = 0.005f;
             //
             float hv_inlier_threshold = 0.015f;

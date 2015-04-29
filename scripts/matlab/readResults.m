@@ -1,6 +1,6 @@
 function [ Results ] = readResults( datasetName, filename )
     
-    path = strcat('datasets/',datasetName,'/precision/',filename);
+    path = strcat('datasets/',datasetName,'/precision/',filename)
     
     file = fopen(path);
     line = fgetl(file);
@@ -14,9 +14,17 @@ function [ Results ] = readResults( datasetName, filename )
         fp = str2double(dl(4));
         tn = str2double(dl(5));
         fn = str2double(dl(6));
+        n_hv = str2double(dl(7));
+        tp_hv = str2double(dl(8));
+        fp_hv = str2double(dl(9));
+        tn_hv = str2double(dl(10));
+        fn_hv = str2double(dl(11));
+        
         precision = tp/(tp + fp);
         recall = tp/(tp + fn);
-        v = [p,n,tp,fp,tn,fn,precision,1-precision,recall];
+        precision_hv = tp_hv/(tp_hv + fp_hv);
+        recall_hv = tp_hv/(tp_hv + fn_hv);
+        v = [p,n,tp,fp,tn,fn,precision,1-precision,recall,n_hv,tp_hv,fp_hv,tn_hv,fn_hv,precision_hv,1-precision_hv,recall_hv];
         
         Results = [Results; v];
         line = fgetl(file);
