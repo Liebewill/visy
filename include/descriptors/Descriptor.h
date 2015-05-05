@@ -29,10 +29,10 @@ namespace visy {
             virtual void describe(cv::Mat& source, pcl::PointCloud<PointType>::Ptr cloud, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Mat& descriptor) = 0;
             std::string buildName();
             virtual std::string buildNameImpl() = 0;
+            DFunction* dfunction;                    
         protected:
             std::string name;
             int size;
-            DFunction* dfunction;                    
         };
 
     }

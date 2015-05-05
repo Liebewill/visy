@@ -114,8 +114,14 @@ main(int argc, char** argv) {
     detector_model = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, true);
 
     std::cout << "Detector: " << detector->buildName() << std::endl;
+    if(parameters->getString("detector")=="BOLD"){
+    std::cout << "Descriptor size: "<<144<<std::endl;
 
+    }else{
+    std::cout << "Descriptor size: "<<detector->descriptor->dfunction->getDataSize()<<std::endl;
 
+    }
+    
     /** DATASET */
     std::cout << "Building Dataset: "<<parameters->getString("dataset")<<std::endl;
     visy::dataset::WillowDataset dataset(parameters->getString("dataset"));
