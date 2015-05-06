@@ -43,7 +43,7 @@ namespace visy {
                 bool use_occlusion_edges = false;
                 int nbin = parameters->getInt("nbin");
                 if (parameters->getInt("occlusion") >= 1) {
-                    use_occlusion_edges = true && !is_model_detector;
+                    use_occlusion_edges = true;// && !is_model_detector;
                 }
                 std::vector<float> sizes = visy::Parameters::parseFloatArray(parameters->getString("sizes"));
 
@@ -121,7 +121,7 @@ namespace visy {
                     detector = new visy::detectors::HybridDetector(detector_name, extractor, descriptor);
                 } else if (detector_name == "B3D_R_Z") {
                     visy::extractors::Extractor* extractor = new visy::extractors::Bold3DExtractor(
-                            !use_occlusion_edges, 5.0f, 2.0f, 25.0f, 0.001f, visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD);
+                            use_occlusion_edges, 5.0f, 2.0f, 25.0f, 0.05f, visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD);
                     visy::descriptors::Descriptor* descriptor = new visy::descriptors::Bold3DDescriptorMultiBunch(
                             nbin, sizes, new visy::descriptors::DFunctionB3DZ(nbin), visy::descriptors::Bold3DDescriptorMultiBunch::BUNCH_METHOD_RADIUS);
                     detector = new visy::detectors::HybridDetector(detector_name, extractor, descriptor);
@@ -133,7 +133,7 @@ namespace visy {
                     detector = new visy::detectors::HybridDetector(detector_name, extractor, descriptor);
                 } else if (detector_name == "B3D_R_Z_MULTI") {
                     visy::extractors::Extractor* extractor = new visy::extractors::Bold3DExtractor(
-                            !use_occlusion_edges, 5.0f, 2.0f, 25.0f, 0.001f, visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD);
+                            !use_occlusion_edges, 5.0f, 2.0f, 25.0f, 0.05f, visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD);
                     visy::descriptors::Descriptor* descriptor = new visy::descriptors::Bold3DDescriptorMultiBunch(
                             nbin, sizes, new visy::descriptors::DFunctionB3DZ(nbin, true), visy::descriptors::Bold3DDescriptorMultiBunch::BUNCH_METHOD_RADIUS);
                     detector = new visy::detectors::HybridDetector(detector_name, extractor, descriptor);

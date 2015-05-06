@@ -364,7 +364,8 @@ main (int argc, char** argv)
 
 
   ext = new visy::extractors::Bold3DExtractor(parameters->getBool("x"));
-
+  
+  std::cout << "Extracting"<<std::endl;
   ext->extract(scene_rgb, scene_cloud, scene_keypoints);
 
   std::cout << "Scene kps:" << scene_keypoints.size() << std::endl;
