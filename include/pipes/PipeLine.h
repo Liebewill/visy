@@ -58,16 +58,17 @@ namespace visy {
                     );
 
             PipeParameters pipeParameters;
-        private:
-
-            
-
+            std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > transforms;
             visy::detectors::Detector* detector;
             pcl::PointCloud<PointType>::Ptr model_cloud;
             pcl::PointCloud<PointType>::Ptr model_cloud_filtered;
             pcl::PointCloud<PointType>::Ptr scene_cloud;
             pcl::PointCloud<PointType>::Ptr scene_cloud_filtered;
-            std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > transforms;
+        private:
+
+
+
+
 
 
         };

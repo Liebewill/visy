@@ -100,6 +100,8 @@ main(int argc, char** argv) {
     parameters->putInt("scene");
     parameters->putInt("nbin");
     parameters->putInt("occlusion");
+    parameters->putFloat("f_th");
+    parameters->putFloat("gt_distance");
 
     /**VIEWER*/
     pcl::visualization::PCLVisualizer * viewer;
@@ -114,16 +116,16 @@ main(int argc, char** argv) {
     detector_model = visy::detectors::utils::buildDetectorFromString(parameters->getString("detector"), parameters, true);
 
     std::cout << "Detector: " << detector->buildName() << std::endl;
-    if(parameters->getString("detector")=="BOLD"){
-    std::cout << "Descriptor size: "<<144<<std::endl;
+    if (parameters->getString("detector") == "BOLD") {
+        std::cout << "Descriptor size: " << 144 << std::endl;
 
-    }else{
-    std::cout << "Descriptor size: "<<detector->descriptor->dfunction->getDataSize()<<std::endl;
+    } else {
+        std::cout << "Descriptor size: " << detector->descriptor->dfunction->getDataSize() << std::endl;
 
     }
-    
+
     /** DATASET */
-    std::cout << "Building Dataset: "<<parameters->getString("dataset")<<std::endl;
+    std::cout << "Building Dataset: " << parameters->getString("dataset") << std::endl;
     visy::dataset::WillowDataset dataset(parameters->getString("dataset"));
 
     /** MODEL */
@@ -170,15 +172,14 @@ main(int argc, char** argv) {
     std::vector<pcl::PointCloud<PointType>::ConstPtr> instances;
     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > registered_rototranslations;
     std::vector<pcl::PointCloud<PointType>::ConstPtr> registered_instances;
-    std::vector<bool> hypotheses_mask; // Mask Vector to identify positive hypotheses
 
     visy::pipes::PipeParameters pipeParameters;
     visy::pipes::PipeLine pipe(detector, pipeParameters);
-    
+
     /** PIPE TRAIN */
     pipe.pipeParameters.downsampling_leaf = parameters->getFloat("down");
-     pipe.pipeParameters.gc_th = parameters->getFloat("gc_th");
-    
+    pipe.pipeParameters.gc_th = parameters->getFloat("gc_th");
+
     pipe.train(
             model_cloud,
             scene_cloud,
@@ -189,37 +190,72 @@ main(int argc, char** argv) {
             model_cloud_filtered,
             scene_cloud_filtered);
 
+    std::vector<bool> hypotheses_mask(pipe.transforms.size()); // Mask Vector to identify positive hypotheses
+    std::fill(hypotheses_mask.begin(), hypotheses_mask.end(), false);
+
     /** PIPE RUN*/
-   
-    pipe.run(
-            instances,
-            registered_instances,
-            rototranslations,
-            registered_rototranslations,
-            hypotheses_mask);
+
+    //        pipe.run(
+    //                instances,
+    //                registered_instances,
+    //                rototranslations,
+    //                registered_rototranslations,
+    //                hypotheses_mask);
+
+    /**
+     * Generates clouds for each instances found 
+     */
+    for (size_t i = 0; i < pipe.transforms.size(); ++i) {
+        pcl::PointCloud<PointType>::Ptr rotated_model(new pcl::PointCloud<PointType> ());
+        pcl::transformPointCloud(*model_cloud_filtered, *rotated_model, pipe.transforms.at(i));
+        instances.push_back(rotated_model);
+    }
+
+    for (int i = 0; i < pipe.transforms.size(); i++) {
+        Eigen::Matrix4f hip_pose = pipe.transforms[i] * model_pose;
+
+        for (int a = 0; a < annotations.size(); a++) {
+            cv::Point3f hip_position(hip_pose(0, 3), hip_pose(1, 3), hip_pose(2, 3));
+            cv::Point3f gt_position(annotations[a].pose(0, 3), annotations[a].pose(1, 3), annotations[a].pose(2, 3));
+            cv::Point3f pos_dist_vector = hip_position - gt_position;
+            float pos_dist = cv::norm(pos_dist_vector);
 
 
+            if (pos_dist <= parameters->getFloat("gt_distance")) {
+                hypotheses_mask[i] = true;
+            } 
+
+        }
+    }
 
     /** DISPLAY */
 
     viewer->addPointCloud(scene_cloud_filtered, "scene");
 
-    for (int i = 0; i < registered_instances.size(); i++) {
+    for (int i = 0; i < hypotheses_mask.size(); i++) {
         std::stringstream ss;
-        ss << "Instance_" << i << "_cloud";
+        ss << "hip_" << i;
         if (hypotheses_mask[i]) {
-
-            visy::tools::displayCloud(*viewer, instances[i], 0, 255, 255, 3.0f, ss.str());
-            ss << "_reg";
-            visy::tools::displayCloud(*viewer, registered_instances[i], 0, 255, 0, 3.0f, ss.str());
-
-            Eigen::Matrix4f p = rototranslations[i] * model_pose;
-            std::cout << "Good:\n" << p << std::endl;
+            visy::tools::displayCloud(*viewer, instances[i], 0, 255, 0, 3.0f, ss.str());
         } else {
-
-            visy::tools::displayCloud(*viewer, registered_instances[i], 255, 0, 0, 3.0f, ss.str());
+//            visy::tools::displayCloud(*viewer, instances[i], 255, 0, 0, 0.5f, ss.str());
         }
     }
+    //        std::stringstream ss;
+    //        ss << "Instance_" << i << "_cloud";
+    //        if (hypotheses_mask[i]) {
+    //
+    //            visy::tools::displayCloud(*viewer, instances[i], 0, 255, 255, 3.0f, ss.str());
+    //            ss << "_reg";
+    //            visy::tools::displayCloud(*viewer, registered_instances[i], 0, 255, 0, 3.0f, ss.str());
+    //
+    //            Eigen::Matrix4f p = rototranslations[i] * model_pose;
+    //            std::cout << "Good:\n" << p << std::endl;
+    //        } else {
+    //
+    //            visy::tools::displayCloud(*viewer, registered_instances[i], 255, 0, 0, 3.0f, ss.str());
+    //        }
+    //    }
 
     for (int a = 0; a < annotations.size(); a++) {
         std::cout << annotations[a].model_name << "\n" << annotations[a].pose << std::endl;

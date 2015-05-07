@@ -140,14 +140,23 @@ namespace visy {
                     float gc_size,
                     float gc_th,
                     int match_type = visy::tools::VISY_TOOLS_MATCHING_FULL);
-            
+
             /**
              * Checks if target KeyPoint3D is in occlusion side wrt source KeyPoint3D
              * @param source
              * @param target
              * @return TRUE or FALSE
              */
-            bool isInOcclusionSide(visy::extractors::KeyPoint3D& source,visy::extractors::KeyPoint3D& target);
+            bool isInOcclusionSide(visy::extractors::KeyPoint3D& source, visy::extractors::KeyPoint3D& target);
+
+            /**
+             * Filter neaarest KeyPoint
+             * @param keypoints
+             * @param keypoints_filtered
+             * @param radius
+             */
+            void filterKeyPoints(std::vector<visy::extractors::KeyPoint3D>& keypoints, std::vector<visy::extractors::KeyPoint3D>& keypoints_filtered, float radius);
+
         }
 
     }

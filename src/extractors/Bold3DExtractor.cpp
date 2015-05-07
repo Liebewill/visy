@@ -12,7 +12,7 @@
 namespace visy {
     namespace extractors {
 
-        Bold3DExtractor::Bold3DExtractor(bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance, int extraction_method, int parallels_rounds, float parallels_distance) : Extractor() {
+        Bold3DExtractor::Bold3DExtractor(bool filter_occlusion, float zone_radius, float zone_slice, float area_normals_angular_th, float area_max_distance, int extraction_method, int parallels_rounds, float parallels_distance, float near_filtering_th) : Extractor() {
             this->filter_occlusion = filter_occlusion;
             this->area_radius = zone_radius;
             this->area_slice = zone_slice;
@@ -21,6 +21,7 @@ namespace visy {
             this->extraction_method = extraction_method;
             this->parallels_rounds = parallels_rounds;
             this->parallels_distance = parallels_distance;
+            this->near_filtering_th = near_filtering_th;
         }
 
         Bold3DExtractor::Bold3DExtractor(const Bold3DExtractor& orig) {
@@ -125,6 +126,11 @@ namespace visy {
 
             keypoints_temp.clear();
 
+            if (this->near_filtering_th > 0.0001f) {
+                std::vector<visy::extractors::KeyPoint3D> keypoints_filtered;
+                visy::extractors::utils::filterKeyPoints(keypoints, keypoints_filtered, this->near_filtering_th);
+                keypoints = keypoints_filtered;
+            }
         }
 
         void
