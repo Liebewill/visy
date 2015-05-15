@@ -120,7 +120,8 @@ main(int argc, char** argv) {
         std::cout << "Descriptor size: " << 144 << std::endl;
 
     } else {
-        std::cout << "Descriptor size: " << detector->descriptor->dfunction->getDataSize() << std::endl;
+        if (detector->descriptor != NULL)
+            std::cout << "Descriptor size: " << detector->descriptor->dfunction->getDataSize() << std::endl;
 
     }
 
@@ -215,6 +216,7 @@ main(int argc, char** argv) {
         Eigen::Matrix4f hip_pose = pipe.transforms[i] * model_pose;
 
         for (int a = 0; a < annotations.size(); a++) {
+            std::cout << annotations[a].model_name << " - " << annotations[a].occlusion << std::endl;
             cv::Point3f hip_position(hip_pose(0, 3), hip_pose(1, 3), hip_pose(2, 3));
             cv::Point3f gt_position(annotations[a].pose(0, 3), annotations[a].pose(1, 3), annotations[a].pose(2, 3));
             cv::Point3f pos_dist_vector = hip_position - gt_position;
@@ -223,7 +225,7 @@ main(int argc, char** argv) {
 
             if (pos_dist <= parameters->getFloat("gt_distance")) {
                 hypotheses_mask[i] = true;
-            } 
+            }
 
         }
     }
@@ -238,7 +240,7 @@ main(int argc, char** argv) {
         if (hypotheses_mask[i]) {
             visy::tools::displayCloud(*viewer, instances[i], 0, 255, 0, 3.0f, ss.str());
         } else {
-//            visy::tools::displayCloud(*viewer, instances[i], 255, 0, 0, 0.5f, ss.str());
+            //            visy::tools::displayCloud(*viewer, instances[i], 255, 0, 0, 0.5f, ss.str());
         }
     }
     //        std::stringstream ss;
@@ -260,6 +262,8 @@ main(int argc, char** argv) {
     for (int a = 0; a < annotations.size(); a++) {
         std::cout << annotations[a].model_name << "\n" << annotations[a].pose << std::endl;
     }
+    float in = dataset.checkInstancesNumber(model.name, annotations);
+    std::cout << "Searching for: " << in << " instances " << std::endl;
 
     while (!viewer->wasStopped()) {
         cv::waitKey(100);

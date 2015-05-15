@@ -90,7 +90,9 @@ main(int argc, char** argv) {
     parameters->putString("dataset");
     parameters->putInt("set");
     parameters->putInt("scene");
-
+    parameters->putFloat("gt_distance");
+    parameters->putFloat("f_th");
+    parameters->putString("test_name");
 
     int use_occlusion = false;
 
@@ -123,11 +125,9 @@ main(int argc, char** argv) {
 
     /** TEST NAME*/
     std::stringstream ss;
-    ss << "test_hv_";
-    if (different_detectors) {
-        ss << "DIFF_";
-    }
-    ss << parameters->getFloat("gc_size") << "_" << detector->buildName();
+    ss << "test_";
+    ss << parameters->getString("test_name")<<"_";
+    ss << parameters->getFloat("gc_size") << "_" << parameters->getString("detector");
 
     std::string test_name = ss.str();
 
@@ -220,48 +220,68 @@ main(int argc, char** argv) {
 
                     if (rototranslations.size() > 0) {
 
-
-                        /**
-                         * Generates clouds for each instances found 
-                         */
-                        for (size_t i = 0; i < rototranslations.size(); ++i) {
-                            pcl::PointCloud<PointType>::Ptr rotated_model(new pcl::PointCloud<PointType> ());
-                            pcl::transformPointCloud(*model_cloud_filtered, *rotated_model, rototranslations.at(i));
-                            instances.push_back(rotated_model);
-                        }
-
-                        /**
-                         * ICP
-                         */
-                        visy::tools::registerInstances(
-                                scene_cloud_filtered,
-                                instances,
-                                registered_instances,
-                                registered_rototranslations,
-                                pipeParameters.icp_max_iterations,
-                                pipeParameters.icp_max_distance);
-                        
-//                        registered_instances = instances;
-
-                        if (registered_instances.size() > 0) {
+                        bool use_HV = false;
+                        if (use_HV) {
+                            /**
+                             * Generates clouds for each instances found 
+                             */
+                            for (size_t i = 0; i < rototranslations.size(); ++i) {
+                                pcl::PointCloud<PointType>::Ptr rotated_model(new pcl::PointCloud<PointType> ());
+                                pcl::transformPointCloud(*model_cloud_filtered, *rotated_model, rototranslations.at(i));
+                                instances.push_back(rotated_model);
+                            }
 
                             /**
-                             * Hypothesis Verification
+                             * ICP
                              */
-                            visy::tools::hypothesesVerification(
+                            visy::tools::registerInstances(
                                     scene_cloud_filtered,
+                                    instances,
                                     registered_instances,
-                                    hypotheses_mask,
-                                    pipeParameters.hv_inlier_threshold,
-                                    pipeParameters.hv_occlusion_threshold,
-                                    pipeParameters.hv_regularizer,
-                                    pipeParameters.hv_radius_clutter,
-                                    pipeParameters.hv_clutter_regularizer,
-                                    pipeParameters.hv_detect_clutter,
-                                    pipeParameters.hv_radius_normal
-                                    );
-                        }
+                                    registered_rototranslations,
+                                    pipeParameters.icp_max_iterations,
+                                    pipeParameters.icp_max_distance);
 
+                            //                        registered_instances = instances;
+
+                            if (registered_instances.size() > 0) {
+
+                                /**
+                                 * Hypothesis Verification
+                                 */
+                                visy::tools::hypothesesVerification(
+                                        scene_cloud_filtered,
+                                        registered_instances,
+                                        hypotheses_mask,
+                                        pipeParameters.hv_inlier_threshold,
+                                        pipeParameters.hv_occlusion_threshold,
+                                        pipeParameters.hv_regularizer,
+                                        pipeParameters.hv_radius_clutter,
+                                        pipeParameters.hv_clutter_regularizer,
+                                        pipeParameters.hv_detect_clutter,
+                                        pipeParameters.hv_radius_normal
+                                        );
+                            }
+                        } else {
+                            hypotheses_mask.resize(rototranslations.size());
+                            std::fill(hypotheses_mask.begin(), hypotheses_mask.end(), false);
+                            
+                            for (int rs = 0; rs < rototranslations.size(); rs++) {
+                                Eigen::Matrix4f hip_pose = rototranslations[rs] * model_pose;
+
+                                for (int a = 0; a < scene_annotations.size(); a++) {
+                                    cv::Point3f hip_position(hip_pose(0, 3), hip_pose(1, 3), hip_pose(2, 3));
+                                    cv::Point3f gt_position(scene_annotations[a].pose(0, 3), scene_annotations[a].pose(1, 3), scene_annotations[a].pose(2, 3));
+                                    cv::Point3f pos_dist_vector = hip_position - gt_position;
+                                    float pos_dist = cv::norm(pos_dist_vector);
+
+                                    if (pos_dist <= parameters->getFloat("gt_distance")) {
+                                        hypotheses_mask[rs] = true;
+                                    }
+
+                                }
+                            }
+                        }
 
                         for (int hi = 0; hi < hypotheses_mask.size(); hi++) {
                             if (hypotheses_mask[hi]) {

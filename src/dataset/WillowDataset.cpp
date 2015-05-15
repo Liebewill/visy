@@ -377,8 +377,11 @@ namespace visy {
         int WillowDataset::checkInstancesNumber(std::string model_name, std::vector<Annotation>& annotations) {
             int counter = 0;
             for (int i = 0; i < annotations.size(); i++) {
-                if (annotations[i].model_name == model_name)
-                    counter++;
+                if (annotations[i].model_name == model_name){
+                    if(annotations[i].occlusion <= 0.9001f){
+                        counter++;
+                    }
+                }
             }
             return counter;
         }
