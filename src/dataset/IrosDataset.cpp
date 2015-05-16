@@ -5,8 +5,8 @@
  * Created on 20 novembre 2014, 23.19
  */
 
-#include <pcl-1.7/pcl/common/io.h>
-#include <pcl-1.7/pcl/common/transforms.h>
+#include <pcl/common/io.h>
+#include <pcl/common/transforms.h>
 
 #include "IrosDataset.h"
 #include "Detector.h"

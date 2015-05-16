@@ -68,7 +68,7 @@ pcl::PointCloud<PointType>::Ptr scene_cloud_filtered(new pcl::PointCloud<PointTy
 /**VIEWER*/
 pcl::visualization::PCLVisualizer * viewer;
 
-cv::Mat out, out2, out3, out_perp;
+cv::Mat out, out2, out3, outtg, out_perp;
 
 struct KeyPoint3DZOrderer {
 
@@ -303,118 +303,114 @@ edgeDetectionLSDCustom(cv::Mat& gray, std::vector<cv::Vec4f>& lines) {
     delete[] edges;
 }
 
- typedef struct {
-    double r;       // percent
-    double g;       // percent
-    double b;       // percent
+typedef struct {
+    double r; // percent
+    double g; // percent
+    double b; // percent
 } rgb;
 
-    typedef struct {
-    double h;       // angle in degrees
-    double s;       // percent
-    double v;       // percent
+typedef struct {
+    double h; // angle in degrees
+    double s; // percent
+    double v; // percent
 } hsv;
 
-    static hsv      rgb2hsv(rgb in);
-    static rgb      hsv2rgb(hsv in);
+static hsv rgb2hsv(rgb in);
+static rgb hsv2rgb(hsv in);
 
-hsv rgb2hsv(rgb in)
-{
-    hsv         out;
-    double      min, max, delta;
+hsv rgb2hsv(rgb in) {
+    hsv out;
+    double min, max, delta;
 
     min = in.r < in.g ? in.r : in.g;
-    min = min  < in.b ? min  : in.b;
+    min = min < in.b ? min : in.b;
 
     max = in.r > in.g ? in.r : in.g;
-    max = max  > in.b ? max  : in.b;
+    max = max > in.b ? max : in.b;
 
-    out.v = max;                                // v
+    out.v = max; // v
     delta = max - min;
-    if( max > 0.0 ) { // NOTE: if Max is == 0, this divide would cause a crash
-        out.s = (delta / max);                  // s
+    if (max > 0.0) { // NOTE: if Max is == 0, this divide would cause a crash
+        out.s = (delta / max); // s
     } else {
         // if max is 0, then r = g = b = 0              
-            // s = 0, v is undefined
+        // s = 0, v is undefined
         out.s = 0.0;
-        out.h = NAN;                            // its now undefined
+        out.h = NAN; // its now undefined
         return out;
     }
-    if( in.r >= max )                           // > is bogus, just keeps compilor happy
-        out.h = ( in.g - in.b ) / delta;        // between yellow & magenta
+    if (in.r >= max) // > is bogus, just keeps compilor happy
+        out.h = (in.g - in.b) / delta; // between yellow & magenta
     else
-    if( in.g >= max )
-        out.h = 2.0 + ( in.b - in.r ) / delta;  // between cyan & yellow
+        if (in.g >= max)
+        out.h = 2.0 + (in.b - in.r) / delta; // between cyan & yellow
     else
-        out.h = 4.0 + ( in.r - in.g ) / delta;  // between magenta & cyan
+        out.h = 4.0 + (in.r - in.g) / delta; // between magenta & cyan
 
-    out.h *= 60.0;                              // degrees
+    out.h *= 60.0; // degrees
 
-    if( out.h < 0.0 )
+    if (out.h < 0.0)
         out.h += 360.0;
 
     return out;
 }
 
+rgb hsv2rgb(hsv in) {
+    double hh, p, q, t, ff;
+    long i;
+    rgb out;
 
-rgb hsv2rgb(hsv in)
-{
-    double      hh, p, q, t, ff;
-    long        i;
-    rgb         out;
-
-    if(in.s <= 0.0) {       // < is bogus, just shuts up warnings
+    if (in.s <= 0.0) { // < is bogus, just shuts up warnings
         out.r = in.v;
         out.g = in.v;
         out.b = in.v;
         return out;
     }
     hh = in.h;
-    if(hh >= 360.0) hh = 0.0;
+    if (hh >= 360.0) hh = 0.0;
     hh /= 60.0;
-    i = (long)hh;
+    i = (long) hh;
     ff = hh - i;
     p = in.v * (1.0 - in.s);
     q = in.v * (1.0 - (in.s * ff));
     t = in.v * (1.0 - (in.s * (1.0 - ff)));
 
-    switch(i) {
-    case 0:
-        out.r = in.v;
-        out.g = t;
-        out.b = p;
-        break;
-    case 1:
-        out.r = q;
-        out.g = in.v;
-        out.b = p;
-        break;
-    case 2:
-        out.r = p;
-        out.g = in.v;
-        out.b = t;
-        break;
+    switch (i) {
+        case 0:
+            out.r = in.v;
+            out.g = t;
+            out.b = p;
+            break;
+        case 1:
+            out.r = q;
+            out.g = in.v;
+            out.b = p;
+            break;
+        case 2:
+            out.r = p;
+            out.g = in.v;
+            out.b = t;
+            break;
 
-    case 3:
-        out.r = p;
-        out.g = q;
-        out.b = in.v;
-        break;
-    case 4:
-        out.r = t;
-        out.g = p;
-        out.b = in.v;
-        break;
-    case 5:
-    default:
-        out.r = in.v;
-        out.g = p;
-        out.b = q;
-        break;
+        case 3:
+            out.r = p;
+            out.g = q;
+            out.b = in.v;
+            break;
+        case 4:
+            out.r = t;
+            out.g = p;
+            out.b = in.v;
+            break;
+        case 5:
+        default:
+            out.r = in.v;
+            out.g = p;
+            out.b = q;
+            break;
     }
-    return out;     
+    return out;
 }
-
 
 /*
  *
@@ -499,6 +495,7 @@ main(int argc, char** argv) {
     out = cv::Mat(h, w, CV_8UC1);
     out2 = cv::Mat(h, w, CV_8UC1);
     out3 = cv::Mat(h, w, CV_8UC1);
+    outtg = cv::Mat(h, w, CV_8UC1);
     float quantum = parameters->getFloat("quantum");
     for (int i = 0; i < scene_normals->points.size(); i++) {
 
@@ -515,10 +512,12 @@ main(int argc, char** argv) {
         float mag_x = (np.dot(x) + 1.0f) / 2.0f;
         float mag_y = (np.dot(y) + 1.0f) / 2.0f;
         float mag_z = (np.dot(z) + 1.0f) / 2.0f;
+        float mag_tg = (np.cross(y).dot(x) + 1.0f) / 2.0f;
 
         out.at<uchar>(i / w, i % w) = floor(mag_x * 255 / quantum) * quantum + quantum / 2.0f;
         out2.at<uchar>(i / w, i % w) = floor(mag_y * 255 / quantum) * quantum + quantum / 2.0f;
         out3.at<uchar>(i / w, i % w) = floor(mag_z * 255 / quantum) * quantum + quantum / 2.0f;
+        outtg.at<uchar>(i / w, i % w) = floor(mag_tg * 255 / quantum) * quantum + quantum / 2.0f;
         //        out.at<cv::Vec3i>(i/w,i%w)[1] = 0;//scene_normals->points[i].normal_y ;//* 255;
         //        out.at<cv::Vec3i>(i/w,i%w)[2] = 0;//scene_normals->points[i].normal_z ;//* 255;
     }
@@ -526,6 +525,7 @@ main(int argc, char** argv) {
     cv::medianBlur(out, out, 5);
     cv::medianBlur(out2, out2, 5);
     cv::medianBlur(out3, out3, 5);
+    cv::medianBlur(outtg, outtg, 5);
 
     cv::namedWindow("out", cv::WINDOW_NORMAL);
     cv::namedWindow("out2", cv::WINDOW_NORMAL);
@@ -538,11 +538,13 @@ main(int argc, char** argv) {
     cv::imshow("out", out);
     cv::imshow("out2", out2);
     cv::imshow("out3", out3);
+    cv::imshow("outtg", outtg);
 
 
     cv::Mat out_lines;
     cv::Mat out_lines2;
     cv::Mat out_lines3;
+    cv::Mat out_lines4;
     cv::Mat out_lines_sum;
     cv::Mat out_lines_sum_lsd;
 
@@ -550,6 +552,7 @@ main(int argc, char** argv) {
     cv::Canny(out, out_lines, thresh, thresh * 2, 3);
     cv::Canny(out2, out_lines2, thresh, thresh * 2, 3);
     cv::Canny(out3, out_lines3, thresh, thresh * 2, 3);
+    cv::Canny(outtg, out_lines4, thresh, thresh * 2, 3);
     //    cv::cvtColor(out_lines,out_lines,CV_GRAY2BGR);
     //    for(int i =0; i < lines.size(); i++){
     //        cv::Vec4f line = lines[i];
@@ -558,13 +561,30 @@ main(int argc, char** argv) {
     cv::imshow("lout", out_lines);
     cv::imshow("lout2", out_lines2);
     cv::imshow("lout3", out_lines3);
+    cv::imshow("louttg", out_lines4);
 
-    out_lines_sum = out_lines + out_lines2;
+    out_lines_sum = cv::Mat(480,640,CV_8SC1);
+    float fiv = 4.0f;
+    out_lines_sum = out/fiv + out2/fiv + out3/fiv+ outtg/fiv;
+    for (int i = 0; i < out_lines_sum.rows; i++) {
+        for (int j = 0; j < out_lines_sum.cols; j++) {
+//            uchar mean = 0;
+//            mean += out_lines.at<uchar>(i,j) ;
+//            mean += out_lines2.at<uchar>(i,j) ;
+//            mean += out_lines3.at<uchar>(i,j) ;
+//            mean += out_lines4.at<uchar>(i,j) ;
+//            mean = mean / fiv;
+           if(out_lines_sum.at<uchar>(i,j) <128){
+//               out_lines_sum.at<uchar>(i,j) = 0;
+           }
+        }
+    }
+//    out_lines_sum = out_lines / fiv + out_lines2 / fiv + out_lines3 / fiv + out_lines4 / fiv;
     cv::imshow("lout_sum", out_lines_sum);
 
     std::vector<cv::Vec4f> lsd_lines;
     out_lines_sum_lsd = scene_rgb.clone();
-//    cv::cvtColor(out_lines_sum_lsd, out_lines_sum_lsd, CV_GRAY2BGR);
+    //    cv::cvtColor(out_lines_sum_lsd, out_lines_sum_lsd, CV_GRAY2BGR);
     edgeDetectionLSDCustom(out_lines_sum, lsd_lines);
     for (int i = 0; i < lsd_lines.size(); i++) {
         cv::Vec4f line = lsd_lines[i];
@@ -586,8 +606,8 @@ main(int argc, char** argv) {
     cv::imshow("lout_sum_lsd", out_lines_sum_lsd);
 
     cv::Mat al = out_lines_sum_lsd.clone();
-    cv::cvtColor(al,al,cv::COLOR_BGR2HSV);
-    
+    cv::cvtColor(al, al, cv::COLOR_BGR2HSV);
+
     cv::imshow("lout_sum_lsd_hsv", al);
 
     //    cv::setMouseCallback("out", CallBackFunc, NULL);

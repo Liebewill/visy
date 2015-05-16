@@ -6,7 +6,7 @@
  */
 
 #include <vector>
-#include <pcl-1.7/pcl/common/io.h>
+#include <pcl/common/io.h>
 
 #include "PipeLine.h"
 

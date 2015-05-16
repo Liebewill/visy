@@ -94,6 +94,7 @@ add_library(visy_descriptors
             src/descriptors/dfunctions/DFunctionB3D4H.cpp
             src/descriptors/dfunctions/DFunctionB3DZ.cpp
             src/descriptors/dfunctions/DFunctionPPF.cpp
+            src/descriptors/dfunctions/DFunctionBD.cpp
             src/descriptors/descriptors_utils.cpp
             )
 target_link_libraries (visy_descriptors ${PCL_LIBRARIES})
@@ -229,6 +230,21 @@ target_link_libraries(
 add_executable(match_hv src/match_hv.cpp)
 target_link_libraries(
     match_hv
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+    visy_pipes
+)
+
+#SCENE MATCHER
+add_executable(match_scene src/match_scene.cpp)
+target_link_libraries(
+    match_scene
     ${PCL_LIBRARIES} 
     ${BOLD_LIBRARIES} 
     ${OpenCV_LIBS} 

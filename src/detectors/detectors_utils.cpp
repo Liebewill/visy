@@ -28,6 +28,7 @@
 #include "DFunctionFPFH2.h"
 #include "DFunctionPPF.h"
 #include "SiftDetector.h"
+#include "DFunctionBD.h"
 
 namespace visy {
     namespace detectors {
@@ -66,6 +67,20 @@ namespace visy {
                             f_th);
                     visy::descriptors::Descriptor* descriptor = new visy::descriptors::Bold3DDescriptorMultiBunch(
                             nbin, sizes, new visy::descriptors::DFunctionB3DZ(nbin), visy::descriptors::Bold3DDescriptorMultiBunch::BUNCH_METHOD_RADIUS);
+                    detector = new visy::detectors::HybridDetector(detector_name, extractor, descriptor);
+                } else if (detector_name == "B3D_R_BD") {
+                    visy::extractors::Extractor* extractor = new visy::extractors::Bold3DExtractor(
+                            use_occlusion_edges,
+                            5.0f,
+                            2.0f,
+                            25.0f,
+                            0.05f,
+                            visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD,
+                            5,
+                            2.0f,
+                            f_th);
+                    visy::descriptors::Descriptor* descriptor = new visy::descriptors::Bold3DDescriptorMultiBunch(
+                            nbin, sizes, new visy::descriptors::DFunctionBD(nbin), visy::descriptors::Bold3DDescriptorMultiBunch::BUNCH_METHOD_RADIUS);
                     detector = new visy::detectors::HybridDetector(detector_name, extractor, descriptor);
                 } else if (detector_name == "SIFT") {
                     detector = new visy::detectors::SiftDetector();

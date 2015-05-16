@@ -15,6 +15,7 @@ namespace visy {
     public:
         Parameters(int argc, char** argv);
         virtual ~Parameters();
+        template<typename T> void readValue(std::string name);
         void putString(std::string name);
         void putFloat(std::string name);
         void putInt(std::string name);
