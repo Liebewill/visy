@@ -81,7 +81,7 @@ pcl::visualization::PCLVisualizer * viewer;
 cv::Mat scene_descriptor, scene_2_descriptor;
 cv::Mat scene_rgb, scene_rgb_full;
 cv::Mat scene_2_rgb, scene_2_rgb_full;
-pcl::PointCloud<PointType>::Ptr scene_cloud(new pcl::PointCloud<PointType>());
+pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
 pcl::PointCloud<PointType>::Ptr scene_cloud_filtered(new pcl::PointCloud<PointType>());
 pcl::PointCloud<PointType>::Ptr scene_2_cloud(new pcl::PointCloud<PointType>());
 pcl::PointCloud<PointType>::Ptr scene_2_cloud_filtered(new pcl::PointCloud<PointType>());
@@ -107,7 +107,7 @@ redraw() {
 
     viewer->removeAllPointClouds();
     viewer->removeAllShapes();
-    viewer->addPointCloud(scene_cloud, "scene");
+    viewer->addPointCloud(cloud, "scene");
     //    draw3DKeyPointsColor(*viewer, out, scene_keypoints, cv::Scalar(0, 255, 0), "scene_kps", true);
     cv::imshow("out", out);
     cv::imshow("out2", out2);
@@ -217,7 +217,7 @@ main(int argc, char** argv) {
     int set_number = parameters->getInt("set");
     int scene_number = parameters->getInt("scene");
     std::vector<visy::dataset::Annotation> annotations;
-    dataset.loadScene(set_number, scene_number, scene_cloud, scene_rgb);
+    dataset.loadScene(set_number, scene_number, cloud, scene_rgb);
 
     int set_2_number = parameters->getInt("set2");
     int scene_2_number = parameters->getInt("scene2");
@@ -228,7 +228,7 @@ main(int argc, char** argv) {
 
 
     /** DETECTION */
-    detector->detect(scene_rgb, scene_cloud, scene_keypoints, scene_descriptor);
+    detector->detect(scene_rgb, cloud, scene_keypoints, scene_descriptor);
     detector->detect(scene_2_rgb, scene_2_cloud, scene_2_keypoints, scene_2_descriptor);
     
     std::cout << "Scene kps: " << scene_keypoints.size() << std::endl;

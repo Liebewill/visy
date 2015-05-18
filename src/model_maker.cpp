@@ -62,7 +62,7 @@ std::vector<cv::Point2f> scene_keypoints_seletected_parallels;
 int scene_keypoint_selected_index = -1;
 cv::Mat scene_descriptor;
 cv::Mat scene_rgb, scene_rgb_full;
-pcl::PointCloud<PointType>::Ptr scene_cloud(new pcl::PointCloud<PointType>());
+pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
 pcl::PointCloud<PointType>::Ptr scene_cloud_filtered(new pcl::PointCloud<PointType>());
 
 /**VIEWER*/
@@ -181,8 +181,8 @@ draw3DKeyPointsColor(pcl::visualization::PCLVisualizer& viewer, cv::Mat& out, st
                     if (pe == 0)continue;
 
                     cv::Point2f distf = perp * pd * (pe + 1);
-                    visy::extractors::KeyPoint3D kp3d = scene_keypoints[i].cloneTranslated(scene_cloud, distf);
-                    ext->checkKeyPoint3DType(scene_rgb, scene_cloud, kp3d);
+                    visy::extractors::KeyPoint3D kp3d = scene_keypoints[i].cloneTranslated(cloud, distf);
+                    ext->checkKeyPoint3DType(scene_rgb, cloud, kp3d);
                     scene_keypoints_parallels_all.push_back(kp3d);
                 }
 
@@ -235,7 +235,7 @@ redraw() {
     out_perp = scene_rgb.clone();
     viewer->removeAllPointClouds();
     viewer->removeAllShapes();
-    viewer->addPointCloud(scene_cloud, "scene");
+    viewer->addPointCloud(cloud, "scene");
     draw3DKeyPointsColor(*viewer, out, scene_keypoints, cv::Scalar(0, 255, 0), "scene_kps", true);
     cv::imshow("out", out);
     cv::imshow("out_perp", out_perp);
@@ -451,7 +451,7 @@ main(int argc, char** argv) {
     int set_number = parameters->getInt("set");
     int scene_number = parameters->getInt("scene");
     std::vector<visy::dataset::Annotation> annotations;
-    dataset.loadScene(set_number, scene_number, scene_cloud, scene_rgb);
+    dataset.loadScene(set_number, scene_number, cloud, scene_rgb);
     dataset.loadAnnotiationsFromSceneFile(model.name, set_number, scene_number, annotations);
 
     //    // Create the filtering object
@@ -479,19 +479,19 @@ main(int argc, char** argv) {
     ne.setNormalEstimationMethod(ne.AVERAGE_3D_GRADIENT);
     ne.setMaxDepthChangeFactor(0.02f);
     ne.setNormalSmoothingSize(10.0f);
-    ne.setInputCloud(scene_cloud);
+    ne.setInputCloud(cloud);
     ne.compute(*scene_normals);
 
 
     //BUILDS KDTREE SPACE SEARCH
     pcl::KdTreeFLANN<PointType> kdtree;
-    kdtree.setInputCloud(scene_cloud);
+    kdtree.setInputCloud(cloud);
 
     std::vector<int> found_indices;
     std::vector<float> indices_distances;
 
-    int w = scene_cloud->width;
-    int h = scene_cloud->height;
+    int w = cloud->width;
+    int h = cloud->height;
     out = cv::Mat(h, w, CV_8UC1);
     out2 = cv::Mat(h, w, CV_8UC1);
     out3 = cv::Mat(h, w, CV_8UC1);
@@ -614,8 +614,8 @@ main(int argc, char** argv) {
     //    cv::namedWindow("out_perp", cv::WINDOW_NORMAL);
     //    cv::setMouseCallback("out_perp", CallBackFunc, NULL);
 
-    viewer->addPointCloud(scene_cloud, "scene");
-    viewer->addPointCloudNormals<PointType, NormalType>(scene_cloud, scene_normals);
+    viewer->addPointCloud(cloud, "scene");
+    viewer->addPointCloudNormals<PointType, NormalType>(cloud, scene_normals);
 
     //    cv::Mat img = out2;
     //    cv::Mat cimg;

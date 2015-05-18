@@ -61,7 +61,7 @@ using namespace std;
 using namespace BoldLib;
 
 cv::Mat scene_rgb, scene_rgb_full;
-pcl::PointCloud<PointType>::Ptr scene_cloud (new pcl::PointCloud<PointType>());
+pcl::PointCloud<PointType>::Ptr cloud (new pcl::PointCloud<PointType>());
 pcl::PointCloud<PointType>::Ptr scene_cloud_full (new pcl::PointCloud<PointType>());
 Eigen::Matrix4f scene_pose;
 pcl::visualization::PCLVisualizer * viewer;

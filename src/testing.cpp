@@ -1,76 +1,19 @@
-/*
- * File:   bunch_tester.cpp
- * Author: daniele
- *
- * Created on 27 novembre 2014, 22.17
- */
-
-#include <cstdlib>
-#include <iostream>
-#include <vector>
-#include <cmath>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/features2d/features2d.hpp>
-
-#include <boldlib.h>
-
-#include <pcl/io/pcd_io.h>
-#include <pcl/common/common_headers.h>
-#include <pcl/common/centroid.h>
-#include <pcl/common/intersections.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/ModelCoefficients.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/kdtree/kdtree.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/impl/point_types.hpp>
-#include <pcl/common/centroid.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/io/ply_io.h>
-#include <pcl/console/parse.h>
-#include <pcl/recognition/cg/geometric_consistency.h>
-#include <pcl/common/transforms.h>
+#include <pcl/segmentation/extract_clusters.h>
 #include <pcl/features/integral_image_normal.h>
-#include <pcl/recognition/hv/hv_go.h>
-#include <pcl/registration/icp.h>
-#include <pcl/keypoints/uniform_sampling.h>
 
-#include <sstream>
-#include <string>
-#include <fstream>
 
-#include <tools.h>
-#include <opencv2/core/mat.hpp>
-
-#include "Extractor.h"
-#include "Bold3DExtractor.h"
-#include "extractors/extrators_utils.h"
-#include "Descriptor.h"
-#include "Bold3DDescriptorMultiBunch.h"
-#include "Detector.h"
-#include "Bold3DMDetector.h"
-#include "Bold3DRDetector.h"
-#include "BoldDetector.h"
 #include "Parameters.h"
-#include "Bold3DM2Detector.h"
-#include "Bold3DR2Detector.h"
-#include "Bold3DM2MultiDetector.h"
-#include "detectors/detectors_utils.h"
-#include "commons/commons.h"
 #include "WillowDataset.h"
-#include "PipeLine.h"
-
-using namespace std;
-using namespace BoldLib;
-
-visy::Parameters* parameters;
-
-visy::extractors::Bold3DExtractor* ext;
 
 /** SCENE */
 std::vector<visy::extractors::KeyPoint3D> scene_keypoints;
@@ -82,221 +25,167 @@ std::vector<cv::Point2f> scene_keypoints_seletected_parallels;
 int scene_keypoint_selected_index = -1;
 cv::Mat scene_descriptor;
 cv::Mat scene_rgb, scene_rgb_full;
-pcl::PointCloud<PointType>::Ptr scene_cloud(new pcl::PointCloud<PointType>());
+pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
 pcl::PointCloud<PointType>::Ptr scene_cloud_filtered(new pcl::PointCloud<PointType>());
 
-/**VIEWER*/
-pcl::visualization::PCLVisualizer * viewer;
+visy::Parameters * parameters;
 
-cv::Mat out, out_perp;
+void gravityVector(pcl::PointCloud<PointType>::Ptr cloud, cv::Point3f& gravity_vector) {
+    // Create the filtering object: downsample the dataset using a leaf size of 1cm
+    pcl::VoxelGrid<PointType> vg;
+    pcl::PointCloud<PointType>::Ptr cloud_filtered(new pcl::PointCloud<PointType>);
+    pcl::PointCloud<PointType>::Ptr cloud_filtered_orig(new pcl::PointCloud<PointType>);
+    pcl::PointCloud<PointType>::Ptr cloud_f(new pcl::PointCloud<PointType>);
 
-struct KeyPoint3DZOrderer {
 
-    inline bool operator()(const visy::extractors::KeyPoint3D& kp1, const visy::extractors::KeyPoint3D& kp2) {
-        return kp1.pt3D.z < kp2.pt3D.z;
+    vg.setInputCloud(cloud);
+    vg.setLeafSize(0.01f, 0.01f, 0.01f);
+    vg.filter(*cloud_filtered);
+    std::cout << "PointCloud after filtering has: " << cloud_filtered->points.size() << " data points." << std::endl; //*
+    //    cloud_filtered = cloud;
+    pcl::copyPointCloud(*cloud_filtered, *cloud_filtered_orig);
+
+    // Create the segmentation object for the planar model and set all the parameters
+    pcl::SACSegmentation<PointType> seg;
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+    pcl::PointCloud<PointType>::Ptr cloud_plane(new pcl::PointCloud<PointType> ());
+    std::vector<pcl::PointCloud<PointType>::Ptr> cloud_planes;
+
+    seg.setOptimizeCoefficients(true);
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setMaxIterations(100);
+    seg.setDistanceThreshold(0.02);
+
+    std::vector<std::vector<int> > planes_inliers;
+    std::vector<std::vector<float> > planes_coeff;
+    std::vector<cv::Point3f > planes_normals;
+
+    int i = 0, nr_points = (int) cloud_filtered->points.size();
+    while (cloud_filtered->points.size() > 0.3 * nr_points) {
+        // Segment the largest planar component from the remaining cloud
+        seg.setInputCloud(cloud_filtered);
+        seg.segment(*inliers, *coefficients);
+        if (inliers->indices.size() == 0) {
+            std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
+            break;
+        }
+
+        pcl::PointCloud<PointType>::Ptr cloud_plane_iter(new pcl::PointCloud<PointType> ());
+        pcl::copyPointCloud(*cloud_filtered, inliers->indices, *cloud_plane_iter);
+        cloud_planes.push_back(cloud_plane_iter);
+
+
+        // Extract the planar inliers from the input cloud
+        pcl::ExtractIndices<PointType> extract;
+        extract.setInputCloud(cloud_filtered);
+        extract.setIndices(inliers);
+        extract.setNegative(false);
+
+        // Get the points associated with the planar surface
+        extract.filter(*cloud_plane);
+
+
+        planes_coeff.push_back(coefficients->values);
+        planes_inliers.push_back(inliers->indices);
+
+        cv::Point3f n(
+                coefficients->values[0],
+                coefficients->values[1],
+                coefficients->values[2]
+                );
+        planes_normals.push_back(n);
+
+        // Remove the planar inliers, extract the rest
+        extract.setNegative(true);
+        extract.filter(*cloud_f);
+        *cloud_filtered = *cloud_f;
     }
-};
 
 
-
-void
-draw3DKeyPointsColor(pcl::visualization::PCLVisualizer& viewer, cv::Mat& out, std::vector<visy::extractors::KeyPoint3D>& keypoints, cv::Scalar color, std::string name, bool simple, bool parallels = false) {
-
-    pcl::PointCloud<PointType>::Ptr keypoint_cloud(new pcl::PointCloud<PointType>());
-    pcl::PointCloud<NormalType>::Ptr keypoint_normals(new pcl::PointCloud<NormalType>());
-
-    std::stringstream ss;
-    for (int i = 0; i < keypoints.size(); i++) {
-        visy::extractors::KeyPoint3D kp = keypoints[i];
-        if (kp.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_TEXTURE) {
-            color = cv::Scalar(0, 0, 255);
-        } else if (kp.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_SURFACE) {
-            color = cv::Scalar(0, 255, 0);
-        } else if (kp.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION) {
-            color = cv::Scalar(255, 0, 0);
-        } else if (kp.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION_EXT) {
-            color = cv::Scalar(255, 255, 255);
-        }
-
-        if (parallels && scene_keypoints_parallels_best == i) {
-            color = cv::Scalar(255, 255, 0);
-        }
-
-
-        PointType p;
-        p.x = kp.pt3D.x;
-        p.y = kp.pt3D.y;
-        p.z = kp.pt3D.z;
-
-        keypoint_cloud->points.push_back(p);
-
-        Eigen::Vector3f vstart, vend;
-        vstart << kp.pt3D.x - kp.direction_x.x / 2.0f, kp.pt3D.y - kp.direction_x.y / 2.0f, kp.pt3D.z - kp.direction_x.z / 2.0f;
-        vend << kp.pt3D.x + kp.direction_x.x / 2.0f, kp.pt3D.y + kp.direction_x.y / 2.0f, kp.pt3D.z + kp.direction_x.z / 2.0f;
-
-
-        ss.str("");
-        ss << name << "_kp_x" << i;
-        visy::tools::draw3DVector(viewer, vstart, vend, color[2] / 255.0f, color[1] / 255.0f, color[0] / 255.0f, ss.str());
-
-        if (!simple) {
-            float scale = 0.01f;
-            vstart << kp.pt3D.x, kp.pt3D.y, kp.pt3D.z;
-            vend << kp.pt3D.x + kp.direction_z.x *scale, kp.pt3D.y + kp.direction_z.y *scale, kp.pt3D.z + kp.direction_z.z *scale;
-
-            ss.str("");
-            ss << name << "_kp_z" << i;
-            visy::tools::draw3DVector(viewer, vstart, vend, 0.0f, 0, 1.0f, ss.str());
-
-
-            scale = 1.0f;
-            vstart << kp.pt3D.x, kp.pt3D.y, kp.pt3D.z;
-            vend << kp.pt3D.x + kp.direction_y.x *scale, kp.pt3D.y + kp.direction_y.y *scale, kp.pt3D.z + kp.direction_y.z *scale;
-
-            ss.str("");
-            ss << name << "_kp_y" << i;
-            visy::tools::draw3DVector(viewer, vstart, vend, 0.0f, 1.0f, 0.0f, ss.str());
-        }
-
+    for (int i = 0; i < planes_coeff.size(); i++) {
+        pcl::PointCloud<PointType>::Ptr cloud_plane(new pcl::PointCloud<PointType> ());
+        pcl::copyPointCloud(*cloud_filtered, planes_inliers[i], *cloud_plane);
+        std::stringstream ss;
     }
 
-    visy::tools::displayCloud(viewer, keypoint_cloud, color[2], color[1], color[0], 5.0f, name);
+    float max_d = 10.0f * (M_PI / 180.0f);
 
-    /**2D*/
-    for (int i = 0; i < keypoints.size(); i++) {
-        visy::extractors::KeyPoint3D kp = keypoints[i];
+    std::vector<int> similar_planes(planes_coeff.size());
+    std::fill(similar_planes.begin(), similar_planes.end(), -1);
+    for (int i = 0; i < planes_coeff.size(); i++) {
+        cv::Point3f p_source = planes_normals[i];
+        p_source = p_source * (1.0f / cv::norm(p_source));
+        for (int j = 0; j < planes_coeff.size(); j++) {
+            if (i != j) {
+                cv::Point3f p_target = planes_normals[j];
+                p_target = p_target * (1.0f / cv::norm(p_target));
+                float pp = acos(p_source.dot(p_target));
 
-        cv::Point2f p1 = kp.pt - cv::Point2f(cos(kp.angle * M_PI / 180.0f) * kp.size / 2.0f, sin(kp.angle * M_PI / 180.0f) * kp.size / 2.0f);
-        cv::Point2f p2 = kp.pt - cv::Point2f(-cos(kp.angle * M_PI / 180.0f) * kp.size / 2.0f, -sin(kp.angle * M_PI / 180.0f) * kp.size / 2.0f);
-
-        if (kp.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_TEXTURE) {
-            color = cv::Scalar(0, 0, 255);
-        } else if (kp.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_SURFACE) {
-            color = cv::Scalar(0, 255, 0);
-        } else if (kp.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION) {
-            color = cv::Scalar(255, 0, 0);
-        } else if (kp.type == visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION_EXT) {
-            color = cv::Scalar(0, 0, 0);
-        }
-
-        float tick = 1.0f;
-
-        if (!parallels) {
-            if (scene_keypoint_selected_index >= 0 && scene_keypoint_selected_index == i) {
-
-                tick = 2.0f;
-                //color = cv::Scalar(255, 255, 0);
-
-                float angle = scene_keypoints[i].angle * M_PI / 180.0f;
-                std::cout << "Angle: " << angle << std::endl;
-                cv::Point2f orientation(cos(angle), sin(angle));
-                std::cout << "Or: " << orientation << std::endl;
-                cv::Point2f perp(-orientation.y, orientation.x);
-                perp.x = perp.x / cv::norm(perp);
-                perp.y = perp.y / cv::norm(perp);
-
-                float pd = 1.0f;
-
-                scene_keypoints_parallels.clear();
-                scene_keypoints_parallels_all.clear();
-                for (int pe = -5; pe <= 5; pe++) {
-                    if (pe == 0)continue;
-
-                    cv::Point2f distf = perp * pd * (pe + 1);
-                    visy::extractors::KeyPoint3D kp3d = scene_keypoints[i].cloneTranslated(scene_cloud, distf);
-                    ext->checkKeyPoint3DType(scene_rgb, scene_cloud, kp3d);
-                    scene_keypoints_parallels_all.push_back(kp3d);
+                if (pp < max_d) {
+                    similar_planes[i] = j;
                 }
-
-                /* BEST KEYPOINT*/
-                std::sort(scene_keypoints_parallels_all.begin(), scene_keypoints_parallels_all.end(), KeyPoint3DZOrderer());
-
-                /* FILTERING EXT EDGES*/
-                for (int sp = 0; sp < scene_keypoints_parallels_all.size(); sp++) {
-                    if (scene_keypoints_parallels_all[sp].type != visy::extractors::KeyPoint3D::KEYPOINT3D_TYPE_EDGE_OCCLUSION_EXT) {
-                        scene_keypoints_parallels.push_back(scene_keypoints_parallels_all[sp]);
-                    }
-                }
-
-                cv::Point3f last_distance_v;
-                float last_distance = -1.0f;
-                int sel_index = -1;
-                for (int sp = 0; sp < scene_keypoints_parallels.size(); sp++) {
-                    if (sp == 0)continue;
-                    last_distance_v = scene_keypoints_parallels[sp].pt3D - scene_keypoints_parallels[sp - 1].pt3D;
-                    last_distance = cv::norm(last_distance_v);
-                    std::cout << "V" << sp << " " << last_distance << std::endl;
-                    if (last_distance > 0.03f) {
-                        sel_index = sp - 1;
-                        break;
-                    }
-                }
-                if (sel_index < 0) {
-                    sel_index = scene_keypoints_parallels.size() - 1;
-                }
-                scene_keypoints_parallels_best = sel_index;
-
 
             }
         }
-        cv::line(out, p1, p2, color, tick);
-        cv::circle(out, keypoints[i].pt, 3.0f, color, 1.0f);
-
     }
 
-    if (!parallels && scene_keypoints_parallels.size() > 0) {
-
-        viewer.removeAllShapes();
-        draw3DKeyPointsColor(viewer, out_perp, scene_keypoints_parallels, cv::Scalar(255, 255, 0), "kp parallels", true, true);
-    }
-}
-
-void
-redraw() {
-    out = scene_rgb.clone();
-    out_perp = scene_rgb.clone();
-    viewer->removeAllPointClouds();
-    viewer->removeAllShapes();
-    viewer->addPointCloud(scene_cloud, "scene");
-    draw3DKeyPointsColor(*viewer, out, scene_keypoints, cv::Scalar(0, 255, 0), "scene_kps", true);
-    cv::imshow("out", out);
-    cv::imshow("out_perp", out_perp);
-}
-
-void
-CallBackFunc(int event, int x, int y, int flags, void* userdata) {
-    if (event == cv::EVENT_LBUTTONDOWN) {
-        std::cout << "Click " << x << std::endl;
-        float min_dist = 1000.0f;
-        int min_index = -1;
-
-        for (int i = 0; i < scene_keypoints.size(); i++) {
-            cv::Point2f d = scene_keypoints[i].pt - cv::Point2f(x, y);
-            float dd = cv::norm(d);
-            if (dd < min_dist) {
-                min_dist = dd;
-                min_index = i;
+    std::vector<int> planes_full_count;
+    std::vector<cv::Point3f> planes_full_normals;
+    std::vector<bool> graph_visit(similar_planes.size());
+    std::fill(graph_visit.begin(), graph_visit.end(), false);
+    bool full = false;
+    while (!full) {
+        int start_index = -1;
+        int ref_index = -1;
+        for (int i = 0; i < similar_planes.size(); i++) {
+            full = true;
+            if (!graph_visit[i]) {
+                start_index = i;
+                ref_index = i;
+                graph_visit[i] = true;
+                full = false;
+                break;
             }
         }
-
-        if (min_index >= 0) {
-            scene_keypoint_selected_index = min_index;
-            scene_keypoints_seletected.clear();
-            scene_keypoints_seletected.push_back(scene_keypoints[min_index]);
-        } else {
-            scene_keypoint_selected_index = -1;
+        if (start_index == -1)continue;
+        int counter = planes_inliers[start_index].size();
+        bool visited = false;
+        while (!visited) {
+            start_index = similar_planes[start_index];
+            if (start_index != -1 && !graph_visit[start_index]) {
+                graph_visit[start_index] = true;
+                counter += planes_inliers[start_index].size();
+            } else {
+                visited = true;
+            }
         }
-        redraw();
+        planes_full_count.push_back(counter);
+        planes_full_normals.push_back(cv::Point3f(
+                planes_coeff[ref_index][0],
+                planes_coeff[ref_index][1],
+                planes_coeff[ref_index][2]
+                ));
+
     }
+
+    int max_plane = -1;
+    int max_plane_count = 0;
+    for (int i = 0; i < planes_full_count.size(); i++) {
+        if (planes_full_count[i] > max_plane_count) {
+            max_plane_count = planes_full_count[i];
+            max_plane = i;
+        }
+    }
+
+    gravity_vector.x = planes_coeff[max_plane][0];
+    gravity_vector.y = planes_coeff[max_plane][1];
+    gravity_vector.z = planes_coeff[max_plane][2];
 }
 
-/*
- *
- */
 int
 main(int argc, char** argv) {
-    pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
-
     /** PARAMETERS */
     parameters = new visy::Parameters(argc, argv);
     parameters->putFloat("gc_th");
@@ -313,57 +202,173 @@ main(int argc, char** argv) {
     parameters->putBool("x");
     parameters->putBool("f");
     parameters->putFloat("f_th");
-
-
-    viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+    parameters->putFloat("quantum");
+    parameters->putFloat("edge_th");
 
     /** DATASET */
     std::cout << "Building Dataset: " << parameters->getString("dataset") << std::endl;
     visy::dataset::WillowDataset dataset(parameters->getString("dataset"));
-    visy::dataset::Model model(parameters->getString("model"), 10);
+
+
+    pcl::visualization::PCLVisualizer* viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
 
 
 
     int set_number = parameters->getInt("set");
     int scene_number = parameters->getInt("scene");
     std::vector<visy::dataset::Annotation> annotations;
-    dataset.loadScene(set_number, scene_number, scene_cloud, scene_rgb);
-    dataset.loadAnnotiationsFromSceneFile(model.name, set_number, scene_number, annotations);
-
-
-    ext = new visy::extractors::Bold3DExtractor(
-            parameters->getInt("occlusion")>0,
-            5.0f, 
-            2.0f,
-            25.0f, 
-            0.05f,
-            visy::tools::VISY_TOOLS_EDGEDETECTION_METHOD_BOLD_LSD, 
-            5, 
-            2.0f,
-            parameters->getFloat("f_th"));
-
-    std::cout << "Extracting" << std::endl;
-    ext->extract(scene_rgb, scene_cloud, scene_keypoints);
-
-    
-
-std::cout << "Scene kps:" << scene_keypoints.size() << std::endl;
-    
-    out = scene_rgb.clone();
+    dataset.loadScene(set_number, scene_number, cloud, scene_rgb);
 
 
 
-    cv::namedWindow("out", cv::WINDOW_NORMAL);
-    cv::setMouseCallback("out", CallBackFunc, NULL);
-    cv::namedWindow("out_perp", cv::WINDOW_NORMAL);
-    cv::setMouseCallback("out_perp", CallBackFunc, NULL);
 
-    redraw();
+    pcl::PointCloud<NormalType>::Ptr scene_normals(new pcl::PointCloud<NormalType>);
+    pcl::PointCloud<NormalType>::Ptr gravity_normals_cloud(new pcl::PointCloud<NormalType>);
 
-    while (!viewer->wasStopped()) {
-        cv::waitKey(100);
-        viewer->spinOnce();
+
+    pcl::IntegralImageNormalEstimation<PointType, NormalType> ne;
+    ne.setNormalEstimationMethod(ne.AVERAGE_3D_GRADIENT);
+    ne.setMaxDepthChangeFactor(0.02f);
+    ne.setNormalSmoothingSize(10.0f);
+    ne.setInputCloud(cloud);
+    ne.compute(*scene_normals);
+
+
+    cv::Point3f gravity;
+    gravityVector(cloud, gravity);
+
+
+
+    for (int i = 0; i < cloud->points.size(); i++) {
+        NormalType n;
+        n.normal_x = gravity.x;
+        n.normal_y = gravity.y;
+        n.normal_z = gravity.z;
+        gravity_normals_cloud->points.push_back(n);
     }
 
-    return 1;
+    Eigen::Vector3f zero;
+    zero << 0, 0, 0;
+
+    Eigen::Vector3f z;
+    z << 0, 0, 1;
+    Eigen::Vector3f x;
+    x << 1, 0, 0;
+    Eigen::Vector3f y;
+    y << 0, 1, 0;
+
+
+    Eigen::Vector3f gz;
+    gz << gravity.x, gravity.y, gravity.z;
+
+    Eigen::Vector3f gx;
+    gx << 1, 0, 0;
+
+    Eigen::Vector3f gy = gz.cross(gx);
+
+
+    visy::tools::draw3DVector(*viewer, zero, x, 1, 0, 0, "x");
+    visy::tools::draw3DVector(*viewer, zero, y, 0, 1, 0, "y");
+    visy::tools::draw3DVector(*viewer, zero, z, 0, 0, 1, "z");
+    visy::tools::draw3DVector(*viewer, zero, gx, 1, 0, 0, "gx");
+    visy::tools::draw3DVector(*viewer, zero, gy, 0, 1, 0, "gy");
+    visy::tools::draw3DVector(*viewer, zero, gz, 0, 0, 1, "gz");
+
+
+
+    int w = scene_rgb.cols;
+    int h = scene_rgb.rows;
+    cv::Mat igx = cv::Mat(h, w, CV_8UC1);
+    cv::Mat igy = cv::Mat(h, w, CV_8UC1);
+    cv::Mat igz = cv::Mat(h, w, CV_8UC1);
+
+    float quantum = parameters->getFloat("quantum");
+    for (int i = 0; i < scene_normals->points.size(); i++) {
+
+        Eigen::Vector3f np;
+        np << scene_normals->points[i].normal_x,
+                scene_normals->points[i].normal_y,
+                scene_normals->points[i].normal_z
+                ;
+
+
+        float mag_x = (np.dot(gx) + 1.0f) / 2.0f;
+        float mag_y = (np.dot(-gy) + 1.0f) / 2.0f;
+        float mag_z = (np.dot(gz) + 1.0f) / 2.0f;
+
+        igx.at<uchar>(i / w, i % w) = floor(mag_x * 255 / quantum) * quantum + quantum / 2.0f;
+        igy.at<uchar>(i / w, i % w) = floor(mag_y * 255 / quantum) * quantum + quantum / 2.0f;
+        igz.at<uchar>(i / w, i % w) = floor(mag_z * 255 / quantum) * quantum + quantum / 2.0f;
+
+    }
+
+    cv::namedWindow("rgb", cv::WINDOW_NORMAL);
+    cv::namedWindow("igx", cv::WINDOW_NORMAL);
+    cv::namedWindow("igy", cv::WINDOW_NORMAL);
+    cv::namedWindow("igz", cv::WINDOW_NORMAL);
+
+    cv::imshow("rgb", scene_rgb);
+    cv::imshow("igx", igx);
+    cv::imshow("igy", igy);
+    cv::imshow("igz", igz);
+
+
+    cv::Mat igz_edges = cv::Mat(h, w, CV_8UC1);
+    cv::Mat rgb_edges = cv::Mat(h, w, CV_8UC1);
+    /// Reduce noise with a kernel 3x3
+    cv::blur(igz, igz, cv::Size(3, 3));
+
+    float thresh = parameters->getFloat("edge_th");
+
+    /// Canny detector
+    cv::Canny(igz, igz_edges, thresh, thresh * 2, 3);
+    cv::Canny(scene_rgb, rgb_edges, thresh, thresh * 2, 3);
+    cv::imshow("igz_edges", igz_edges);
+    cv::imshow("rgb_edges", rgb_edges);
+
+
+    std::vector<cv::Vec3f> circles;
+    cv::Mat scene_gray;
+    cv::cvtColor(scene_rgb, scene_gray, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(scene_gray, scene_gray, cv::Size(9, 9), 2, 2);
+    cv::Mat circles_img = scene_gray.clone();
+    /// Apply the Hough Transform to find the circles
+    cv::HoughCircles(scene_gray, circles, CV_HOUGH_GRADIENT, 1, scene_gray.rows / 8, 200, 100, 0, 0);
+
+    std::cout << "Circles: " << circles.size() << std::endl;
+    /// Draw the circles detected
+    for (size_t i = 0; i < circles.size(); i++) {
+        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+        int radius = cvRound(circles[i][2]);
+        // circle center
+        cv::circle(circles_img, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
+        // circle outline
+        cv::circle(circles_img, center, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
+    }
+    cv::imshow("circles_img", circles_img);
+
+    viewer->addPointCloud(cloud, "scene");
+    viewer->addPointCloudNormals<PointType, NormalType>(cloud, gravity_normals_cloud);
+
+    // Creating the KdTree object for the search method of the extraction
+    //    pcl::search::KdTree<PointType>::Ptr tree(new pcl::search::KdTree<PointType>);
+    //    tree->setInputCloud(cloud_filtered);
+    //
+    //    std::vector<pcl::PointIndices> cluster_indices;
+    //    pcl::EuclideanClusterExtraction<PointType> ec;
+    //    ec.setClusterTolerance(0.02); // 2cm
+    //    ec.setMinClusterSize(100);
+    //    ec.setMaxClusterSize(25000);
+    //    ec.setSearchMethod(tree);
+    //    ec.setInputCloud(cloud_filtered);
+    //    ec.extract(cluster_indices);
+
+
+
+    while (!viewer->wasStopped()) {
+        viewer->spinOnce();
+        cv::waitKey(10);
+    }
+
+    return (0);
 }
