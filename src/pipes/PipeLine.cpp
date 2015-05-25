@@ -32,7 +32,9 @@ namespace visy {
                     scene_descriptor,
                     this->transforms,
                     this->pipeParameters.gc_size,
-                    this->pipeParameters.gc_th
+                    this->pipeParameters.gc_th,
+                    this->pipeParameters.match_type,
+                    this->pipeParameters.use_hough
                     );
 
             visy::tools::cloudDownsample(model_cloud, this->model_cloud_filtered, this->pipeParameters.downsampling_leaf);

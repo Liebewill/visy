@@ -63,6 +63,8 @@ namespace visy {
             cv::Point3f direction_y;
             cv::Point3f direction_z;
 
+            RFType reference_frame;
+            
             int type;
 
             KeyPoint3D clone();

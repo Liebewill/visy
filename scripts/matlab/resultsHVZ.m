@@ -6,26 +6,22 @@ colors=hsv(4);
 w=3;
    dataset = 'TW';
 
-%plotResultsHV(readResults(dataset,'test_10_DETECTOR_B3D_R_Z!EXTRACTOR_BOLD3D;E101;1;5;2;25;0.001!DESCRIPTOR_BOLD3D-MULTIBUNCH;12;101;(0.11);DF_B3DZ.csv'),colors(1,:),w,'--');hold on;
-plotResultsHV(readResults(dataset,'test_NUOVIEDGE_OCC_0.01_B3D_R_Z.csv'),colors(1,:),w,'--');hold on;
-plotResultsHV(readResults(dataset,'test_NUOVIEDGE_OCC_0.01_SIFT.csv'),colors(2,:),w,'--');hold on;
-%plotResultsHV(readResults(dataset,'test_hv_20_DETECTOR_B3D_R_2ANGLE!EXTRACTOR_BOLD3D;E101;1;5;2;25;0.001!DESCRIPTOR_BOLD3D-MULTIBUNCH;12;101;(0.1);DF_B2D.csv'),colors(2,:),w,'--');hold on;
-%plotResultsHV(readResults(dataset,'test_hv_20_DETECTOR_B3D_R_V1!EXTRACTOR_BOLD3D;E101;1;5;2;25;0.001!DESCRIPTOR_BOLD3D-MULTIBUNCH;12;101;(0.1);DF_B3DV1.csv'),colors(3,:),w,'--');hold on;
+%plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_0.01_SIFT.csv'),colors(1,:),w,'--');hold on;
+plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_05_0.05_SIFT.csv'),colors(1,:),w,'--');hold on;
+
+%plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_0.01_BOLD.csv'),colors(2,:),w,'--');hold on;
+plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_05_0.05_BOLD.csv'),colors(2,:),w,'--');hold on;
 
 
-plotResultsHV(readResults(dataset,'test_NUOVIEDGE_OCC_0.01_BOLD.csv'),colors(4,:),w,'--');hold on;
+%plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_NOHOUGH_0.01_B3D_R_Z.csv'),colors(3,:),w,'--');hold on;
+plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_05__NOHOUGH_0.05_B3D_R_Z.csv'),colors(3,:),w,'--');hold on;
 
-%plotResultsHV(readResults(dataset,'test_hv_10_DETECTOR_BOLD!!.csv'),colors(3,:),w,'-.');hold on;
+plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_HOUGH_0.05_B3D_R_Z.csv'),colors(4,:),w,'--');hold on;
 
-
-%plotResultsHV(readResults(dataset,'test_10_DETECTOR_BOLD!!.csv'),colors(2,:),w,'--');hold on;
-
-
-%plotResults(readResults(dataset,'test_0.02_DETECTOR_BOLD!!.csv'),colors(7,:),w);hold on;
 
    xlabel('1-precision');
     ylabel('recall');
-   legend('BOLD3D Z WITH OCCLUSION EDGES','BOLD3D Z WITHOUT ','BOLD', 'Location','northwest');
+   legend('SIFT','BOLD','B3D Z GC','B3D Z HOUGH3D', 'Location','northwest');
 
 end
 

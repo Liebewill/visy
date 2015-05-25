@@ -212,6 +212,59 @@ namespace visy {
 
             /**
              * 
+             * @param gc_size
+             * @param gc_th
+             * @param model_keypoints
+             * @param scene_keypoints
+             * @param model_scene_corrs
+             * @param rototranslations
+             * @param clustered_corrs
+             */
+            void keypointsHough3DGrouping(double gc_size, int gc_th,
+                    std::vector<visy::extractors::KeyPoint3D>& model_keypoints,
+                    std::vector<visy::extractors::KeyPoint3D>& scene_keypoints,
+                    pcl::CorrespondencesPtr& model_scene_corrs,
+                    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
+                    std::vector < pcl::Correspondences >& clustered_corrs) {
+
+                pcl::PointCloud<PointType>::Ptr model_keypoints_cloud(new pcl::PointCloud<PointType>());
+                pcl::PointCloud<PointType>::Ptr scene_keypoints_cloud(new pcl::PointCloud<PointType>());
+                buildPrimiteCloudFromKeypoints(model_keypoints_cloud, model_keypoints);
+                buildPrimiteCloudFromKeypoints(scene_keypoints_cloud, scene_keypoints);
+
+                pcl::PointCloud<RFType>::Ptr model_rf(new pcl::PointCloud<RFType> ());
+                pcl::PointCloud<RFType>::Ptr scene_rf(new pcl::PointCloud<RFType> ());
+
+                for (int i = 0; i < model_keypoints.size(); i++) {
+                    model_rf->points.push_back(model_keypoints[i].reference_frame);
+                }
+
+                for (int i = 0; i < scene_keypoints.size(); i++) {
+                    scene_rf->points.push_back(scene_keypoints[i].reference_frame);
+                }
+                
+                std::cout << "HOUGH "<<gc_size << " . "<<gc_th<<std::endl;
+
+                //  Clustering
+                pcl::Hough3DGrouping<PointType, PointType, RFType, RFType> clusterer;
+                clusterer.setHoughBinSize(gc_size);
+                clusterer.setHoughThreshold(gc_th);
+                clusterer.setUseInterpolation(true);
+                clusterer.setUseDistanceWeight(false);
+
+                clusterer.setInputCloud(model_keypoints_cloud);
+                clusterer.setInputRf(model_rf);
+                clusterer.setSceneCloud(scene_keypoints_cloud);
+                clusterer.setSceneRf(scene_rf);
+                clusterer.setModelSceneCorrespondences(model_scene_corrs);
+
+                //clusterer.cluster (clustered_corrs);
+                clusterer.recognize(rototranslations, clustered_corrs);
+
+            }
+
+            /**
+             * 
              * @param source
              * @param out
              * @param times
@@ -240,7 +293,8 @@ namespace visy {
                     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
                     float gc_size,
                     float gc_th,
-                    int match_type) {
+                    int match_type,
+                    bool use_hough) {
                 /* MATCHES */
                 std::vector<cv::DMatch> matches;
                 std::vector<cv::DMatch> good_matches;
@@ -264,12 +318,21 @@ namespace visy {
 
                 /* GEOMETRU CONSISTENCY GROUPING*/
                 std::vector < pcl::Correspondences > clustered_corrs;
-                visy::extractors::utils::keypointsGeometricConsistencyGrouping(gc_size, gc_th,
-                        matched_model_keypoints,
-                        matched_scene_keypoints,
-                        model_scene_corrs,
-                        rototranslations,
-                        clustered_corrs);
+                if (!use_hough) {
+                    visy::extractors::utils::keypointsGeometricConsistencyGrouping(gc_size, gc_th,
+                            matched_model_keypoints,
+                            matched_scene_keypoints,
+                            model_scene_corrs,
+                            rototranslations,
+                            clustered_corrs);
+                }else{
+                    visy::extractors::utils::keypointsHough3DGrouping(gc_size,gc_th,
+                             matched_model_keypoints,
+                            matched_scene_keypoints,
+                            model_scene_corrs,
+                            rototranslations,
+                            clustered_corrs);
+                }
 
             }
 
@@ -294,8 +357,7 @@ namespace visy {
                 return target.direction_y.dot(d) < 0;
             }
 
-            void filterKeyPoints(std::vector<visy::extractors::KeyPoint3D>& keypoints, std::vector<visy::extractors::KeyPoint3D>& keypoints_filtered, float radius)
-            {
+            void filterKeyPoints(std::vector<visy::extractors::KeyPoint3D>& keypoints, std::vector<visy::extractors::KeyPoint3D>& keypoints_filtered, float radius) {
                 std::vector<bool> valid_mask(keypoints.size());
                 std::fill(valid_mask.begin(), valid_mask.end(), true);
 

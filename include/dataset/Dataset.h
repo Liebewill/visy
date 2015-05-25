@@ -17,10 +17,12 @@ namespace visy {
         struct Model {
             std::string name;
             int n_views;
-
-            Model(std::string name, int n_views) {
+            bool no_texture;
+            
+            Model(std::string name, int n_views,bool no_texture = false) {
                 this->name = name;
                 this->n_views = n_views;
+                this->no_texture = no_texture;
             }
 
         };

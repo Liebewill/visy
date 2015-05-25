@@ -16,8 +16,10 @@ namespace visy {
     namespace pipes {
 
         struct PipeParameters {
+            int match_type = visy::tools::VISY_TOOLS_MATCHING_FULL;
             float gc_size = 0.01f;
             float gc_th = 3;
+            bool use_hough = false;
             //
             std::string downsampling_method = "uniform";
             float downsampling_leaf = 0.005f;

@@ -100,6 +100,7 @@ main(int argc, char** argv) {
     parameters->putInt("scene");
     parameters->putInt("nbin");
     parameters->putInt("occlusion");
+    parameters->putInt("hough");
     parameters->putFloat("f_th");
     parameters->putFloat("gt_distance");
 
@@ -179,8 +180,11 @@ main(int argc, char** argv) {
 
     /** PIPE TRAIN */
     pipe.pipeParameters.downsampling_leaf = parameters->getFloat("down");
+    pipe.pipeParameters.gc_size = parameters->getFloat("gc_size");
     pipe.pipeParameters.gc_th = parameters->getFloat("gc_th");
-
+    bool use_hough = parameters->getInt("hough")>=1;
+    pipe.pipeParameters.use_hough = use_hough;
+    
     pipe.train(
             model_cloud,
             scene_cloud,

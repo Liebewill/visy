@@ -30,45 +30,45 @@ namespace visy {
                 this->SCENE_PATTERN_NAME = "cloud_$$$$$$$$$$";
                 this->ANNOTATION_PATH = "annotations/";
 
-                WillowDataset::models->push_back(Model("object_01", 36));
-                WillowDataset::models->push_back(Model("object_02", 36));
-                WillowDataset::models->push_back(Model("object_03", 36));
-                WillowDataset::models->push_back(Model("object_04", 36));
-                WillowDataset::models->push_back(Model("object_05", 36));
-                WillowDataset::models->push_back(Model("object_06", 36));
-                WillowDataset::models->push_back(Model("object_07", 36));
-                WillowDataset::models->push_back(Model("object_08", 36));
-                WillowDataset::models->push_back(Model("object_09", 36));
+                WillowDataset::models->push_back(Model("object_01", 36,false));
+                WillowDataset::models->push_back(Model("object_02", 36,false));
+                WillowDataset::models->push_back(Model("object_03", 36,false));
+                WillowDataset::models->push_back(Model("object_04", 36,false));
+                WillowDataset::models->push_back(Model("object_05", 36,false));
+                WillowDataset::models->push_back(Model("object_06", 36,false));
+                WillowDataset::models->push_back(Model("object_07", 36,false));
+                WillowDataset::models->push_back(Model("object_08", 36,false));
+                WillowDataset::models->push_back(Model("object_09", 36,false));
 
-                WillowDataset::models->push_back(Model("object_10", 36));
-                WillowDataset::models->push_back(Model("object_11", 36));
-                WillowDataset::models->push_back(Model("object_12", 36));
-                WillowDataset::models->push_back(Model("object_13", 36));
-                WillowDataset::models->push_back(Model("object_14", 36));
-                WillowDataset::models->push_back(Model("object_15", 36));
-                WillowDataset::models->push_back(Model("object_16", 36));
-                WillowDataset::models->push_back(Model("object_17", 36));
-                WillowDataset::models->push_back(Model("object_18", 36));
-                WillowDataset::models->push_back(Model("object_19", 36));
+                WillowDataset::models->push_back(Model("object_10", 36,false));
+                WillowDataset::models->push_back(Model("object_11", 36,false));
+                WillowDataset::models->push_back(Model("object_12", 36,false));
+                WillowDataset::models->push_back(Model("object_13", 36,false));
+                WillowDataset::models->push_back(Model("object_14", 36,false));
+                WillowDataset::models->push_back(Model("object_15", 36,false));
+                WillowDataset::models->push_back(Model("object_16", 36,false));
+                WillowDataset::models->push_back(Model("object_17", 36,false));
+                WillowDataset::models->push_back(Model("object_18", 36,false));
+                WillowDataset::models->push_back(Model("object_19", 36,false));
 
-                WillowDataset::models->push_back(Model("object_20", 36));
-                WillowDataset::models->push_back(Model("object_21", 36));
-                WillowDataset::models->push_back(Model("object_22", 36));
-                WillowDataset::models->push_back(Model("object_23", 36));
-                WillowDataset::models->push_back(Model("object_24", 36));
-                WillowDataset::models->push_back(Model("object_25", 36));
-                WillowDataset::models->push_back(Model("object_26", 36));
-                WillowDataset::models->push_back(Model("object_27", 36));
-                WillowDataset::models->push_back(Model("object_28", 36));
-                WillowDataset::models->push_back(Model("object_29", 36));
+                WillowDataset::models->push_back(Model("object_20", 36,false));
+                WillowDataset::models->push_back(Model("object_21", 36,false));
+                WillowDataset::models->push_back(Model("object_22", 36,false));
+                WillowDataset::models->push_back(Model("object_23", 36,false));
+                WillowDataset::models->push_back(Model("object_24", 36,false));
+                WillowDataset::models->push_back(Model("object_25", 36,false));
+                WillowDataset::models->push_back(Model("object_26", 36,false));
+                WillowDataset::models->push_back(Model("object_27", 36,false));
+                WillowDataset::models->push_back(Model("object_28", 36,false));
+                WillowDataset::models->push_back(Model("object_29", 36,false));
 
 
-                WillowDataset::models->push_back(Model("object_30", 36));
-                WillowDataset::models->push_back(Model("object_31", 36));
-                WillowDataset::models->push_back(Model("object_32", 36));
-                WillowDataset::models->push_back(Model("object_33", 36));
-                WillowDataset::models->push_back(Model("object_34", 36));
-                WillowDataset::models->push_back(Model("object_35", 36));
+                WillowDataset::models->push_back(Model("object_30", 36,false));
+                WillowDataset::models->push_back(Model("object_31", 36,false));
+                WillowDataset::models->push_back(Model("object_32", 36,false));
+                WillowDataset::models->push_back(Model("object_33", 36,false));
+                WillowDataset::models->push_back(Model("object_34", 36,false));
+                WillowDataset::models->push_back(Model("object_35", 36,false));
 
                 //SCENES
                 WillowDataset::scenes->push_back(SetScene(1, 15));
@@ -103,23 +103,23 @@ namespace visy {
                 this->SCENE_PATTERN_NAME = "$$$$$";
                 this->ANNOTATION_PATH = "annotations/";
 
-                WillowDataset::models->push_back(Model("asus_box", 37));
-                WillowDataset::models->push_back(Model("burti", 60));
-                WillowDataset::models->push_back(Model("canon_camera_bag", 38));
-                WillowDataset::models->push_back(Model("cisco_phone", 19));
-                WillowDataset::models->push_back(Model("coffee_container", 16));
-                WillowDataset::models->push_back(Model("felix_ketchup", 20));
-                WillowDataset::models->push_back(Model("fruchtmolke", 49));
-                WillowDataset::models->push_back(Model("jasmine_green_tea", 41));
-                WillowDataset::models->push_back(Model("muller_milch_banana", 20));
-                WillowDataset::models->push_back(Model("muller_milch_shoko", 19));
-                WillowDataset::models->push_back(Model("opencv_book", 12));
-                WillowDataset::models->push_back(Model("red_mug_white_spots", 79));
-                WillowDataset::models->push_back(Model("skull", 39));
-                WillowDataset::models->push_back(Model("strands_mounting_unit", 56));
-                WillowDataset::models->push_back(Model("toilet_paper", 16));
-                WillowDataset::models->push_back(Model("water_boiler", 19));
-                WillowDataset::models->push_back(Model("yellow_toy_car", 19));
+                WillowDataset::models->push_back(Model("asus_box", 37,false));
+                WillowDataset::models->push_back(Model("burti", 60,false));
+                WillowDataset::models->push_back(Model("canon_camera_bag", 38,true));
+                WillowDataset::models->push_back(Model("cisco_phone", 19,true));
+                WillowDataset::models->push_back(Model("coffee_container", 16,false));
+                WillowDataset::models->push_back(Model("felix_ketchup", 20,false));
+                WillowDataset::models->push_back(Model("fruchtmolke", 49,false));
+                WillowDataset::models->push_back(Model("jasmine_green_tea", 41,false));
+                WillowDataset::models->push_back(Model("muller_milch_banana", 20,false));
+                WillowDataset::models->push_back(Model("muller_milch_shoko", 19,false));
+                WillowDataset::models->push_back(Model("opencv_book", 12,false));
+                WillowDataset::models->push_back(Model("red_mug_white_spots", 79,true));
+                WillowDataset::models->push_back(Model("skull", 39,true));
+                WillowDataset::models->push_back(Model("strands_mounting_unit", 56,true));
+                WillowDataset::models->push_back(Model("toilet_paper", 16,true));
+                WillowDataset::models->push_back(Model("water_boiler", 19,true));
+                WillowDataset::models->push_back(Model("yellow_toy_car", 19,false));
 
                 //SCENES
                 WillowDataset::scenes->push_back(SetScene(1, 6));

@@ -25,6 +25,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 
 #include <pcl/recognition/cg/geometric_consistency.h>
+#include <pcl/recognition/cg/hough_3d.h>
 
 #include "KeyPoint3D.h"
 
@@ -112,6 +113,23 @@ namespace visy {
                     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
                     std::vector < pcl::Correspondences >& clustered_corrs);
 
+            
+            /**
+             * Hough3D Correspondence Grouping
+             * @param gc_size
+             * @param gc_th
+             * @param model_keypoints
+             * @param scene_keypoints
+             * @param model_scene_corrs
+             * @param rototranslations
+             * @param clustered_corrs
+             */
+            void keypointsHough3DGrouping(double gc_size, int gc_th,
+                    std::vector<visy::extractors::KeyPoint3D>& model_keypoints,
+                    std::vector<visy::extractors::KeyPoint3D>& scene_keypoints,
+                    pcl::CorrespondencesPtr& model_scene_corrs,
+                    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
+                    std::vector < pcl::Correspondences >& clustered_corrs);
 
             /**
              * Replicates keypoints 
@@ -139,7 +157,8 @@ namespace visy {
                     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
                     float gc_size,
                     float gc_th,
-                    int match_type = visy::tools::VISY_TOOLS_MATCHING_FULL);
+                    int match_type = visy::tools::VISY_TOOLS_MATCHING_FULL,
+                    bool use_hough = false);
 
             /**
              * Checks if target KeyPoint3D is in occlusion side wrt source KeyPoint3D

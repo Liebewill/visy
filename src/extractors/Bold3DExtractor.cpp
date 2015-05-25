@@ -211,7 +211,38 @@ namespace visy {
                 }
 
 
+                cv::Point3f rx = kp.direction_x;
+                cv::Point3f ry = kp.direction_x.cross(kp.direction_z);
+                cv::Point3f rz = ry.cross(kp.direction_x);
+                
+                rx = rx*(1.0f/cv::norm(rx));
+                ry = ry*(1.0f/cv::norm(ry));
+                rz = rz*(1.0f/cv::norm(rz));
+                
+                kp.reference_frame.x_axis[0] = rx.x;
+                kp.reference_frame.x_axis[1] = rx.y;
+                kp.reference_frame.x_axis[2] = rx.z;
 
+                kp.reference_frame.y_axis[0] = ry.x;
+                kp.reference_frame.y_axis[1] = ry.y;
+                kp.reference_frame.y_axis[2] = ry.z;
+
+                kp.reference_frame.z_axis[0] = rz.x;
+                kp.reference_frame.z_axis[1] = rz.y;
+                kp.reference_frame.z_axis[2] = rz.z;
+                
+                kp.reference_frame.rf[0] = rx.x;
+                kp.reference_frame.rf[1] = ry.x;
+                kp.reference_frame.rf[2] = rz.x;
+                
+                kp.reference_frame.rf[3] = rx.y;
+                kp.reference_frame.rf[4] = ry.y;
+                kp.reference_frame.rf[5] = rz.y;
+                
+                kp.reference_frame.rf[6] = rx.z;
+                kp.reference_frame.rf[7] = ry.z;
+                kp.reference_frame.rf[8] = rz.z;
+                
             }
         }
 

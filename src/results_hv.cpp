@@ -90,12 +90,14 @@ main(int argc, char** argv) {
     parameters->putString("dataset");
     parameters->putInt("set");
     parameters->putInt("scene");
+    parameters->putInt("untextured");
     parameters->putFloat("gt_distance");
     parameters->putFloat("f_th");
     parameters->putString("test_name");
 
     int use_occlusion = false;
-
+    bool untextured = parameters->getInt("untextured")>=1;
+    
     int min_gc = 3;
     int max_gc = parameters->getFloat("maxgc") > 0 ? parameters->getFloat("maxgc") : 40;
 
@@ -137,6 +139,9 @@ main(int argc, char** argv) {
     for (int model_index = 0; model_index < dataset.models->size(); model_index++) {
         /**MODEL */
         visy::dataset::Model model = dataset.models->at(model_index);
+        
+        if(untextured && !model.no_texture)continue;
+        
         std::vector<visy::extractors::KeyPoint3D> model_keypoints;
         cv::Mat model_descriptor;
         pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>());
@@ -210,7 +215,7 @@ main(int argc, char** argv) {
                     /* GEOMETRU CONSISTENCY GROUPING*/
                     std::vector < pcl::Correspondences > clustered_corrs;
                     visy::extractors::utils::keypointsGeometricConsistencyGrouping(
-                            pipeParameters.gc_size,
+                            parameters->getFloat("gc_size"),
                             gc_th,
                             matched_model_keypoints,
                             matched_scene_keypoints,
