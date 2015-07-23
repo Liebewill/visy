@@ -7,16 +7,11 @@ w=3;
    dataset = 'TW';
 
 %plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_0.01_SIFT.csv'),colors(1,:),w,'--');hold on;
-plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_05_0.05_SIFT.csv'),colors(1,:),w,'--');hold on;
+plotResultsHV(readResults(dataset,'test_FINAL_TEST_0.01_SIFT.csv'),colors(1,:),w,'--');hold on;
+plotResultsHV(readResults(dataset,'test_FINAL_TEST_0.03_BOLD.csv'),colors(2,:),w,'--');hold on;
+plotResultsHV(readResults(dataset,'test_FINAL_TEST_0.03_B3D_R_Z.csv'),colors(3,:),w,'--');hold on;
+plotResultsHV(readResults(dataset,'test_FINAL_TEST_HOUGH_0.05_B3D_R_Z.csv'),colors(4,:),w,'--');hold on;
 
-%plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_0.01_BOLD.csv'),colors(2,:),w,'--');hold on;
-plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_05_0.05_BOLD.csv'),colors(2,:),w,'--');hold on;
-
-
-%plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_NOHOUGH_0.01_B3D_R_Z.csv'),colors(3,:),w,'--');hold on;
-plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_05__NOHOUGH_0.05_B3D_R_Z.csv'),colors(3,:),w,'--');hold on;
-
-plotResultsHV(readResults(dataset,'test_HOUGHCOMPARE_HOUGH_0.05_B3D_R_Z.csv'),colors(4,:),w,'--');hold on;
 
 
    xlabel('1-precision');

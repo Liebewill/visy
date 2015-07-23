@@ -10,7 +10,10 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/features/integral_image_normal.h>
-
+#include <pcl/registration/transformation_estimation_svd.h>
+#include <pcl/registration/transformation_estimation_lm.h>
+#include <pcl/filters/fast_bilateral.h>
+#include <pcl/filters/bilateral.h>
 
 #include "Parameters.h"
 #include "WillowDataset.h"
@@ -25,11 +28,12 @@ std::vector<cv::Point2f> scene_keypoints_seletected_parallels;
 int scene_keypoint_selected_index = -1;
 cv::Mat scene_descriptor;
 cv::Mat scene_rgb, scene_rgb_full;
-pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
+
 pcl::PointCloud<PointType>::Ptr scene_cloud_filtered(new pcl::PointCloud<PointType>());
 
 visy::Parameters * parameters;
 
+/*
 void gravityVector(pcl::PointCloud<PointType>::Ptr cloud, cv::Point3f& gravity_vector) {
     // Create the filtering object: downsample the dataset using a leaf size of 1cm
     pcl::VoxelGrid<PointType> vg;
@@ -100,7 +104,7 @@ void gravityVector(pcl::PointCloud<PointType>::Ptr cloud, cv::Point3f& gravity_v
         // Remove the planar inliers, extract the rest
         extract.setNegative(true);
         extract.filter(*cloud_f);
-        *cloud_filtered = *cloud_f;
+ *cloud_filtered = *cloud_f;
     }
 
 
@@ -183,6 +187,7 @@ void gravityVector(pcl::PointCloud<PointType>::Ptr cloud, cv::Point3f& gravity_v
     gravity_vector.y = planes_coeff[max_plane][1];
     gravity_vector.z = planes_coeff[max_plane][2];
 }
+ */
 
 int
 main(int argc, char** argv) {
@@ -205,166 +210,273 @@ main(int argc, char** argv) {
     parameters->putFloat("quantum");
     parameters->putFloat("edge_th");
 
-    /** DATASET */
-    std::cout << "Building Dataset: " << parameters->getString("dataset") << std::endl;
-    visy::dataset::WillowDataset dataset(parameters->getString("dataset"));
+
+    int vw = 256;
+    int full_size = vw * vw*vw;
+    double max_dim = 2.0;
+    double offset_x = 0.0;
+    double offset_y = 1.0;
+    double offset_z = 1.0;
+    double step = max_dim / (double) vw;
+    double* vox = new double[vw * vw * vw];
+    bool* vox_check = new bool[vw * vw * vw];
+    double sigma = step * 10;
+    std::fill(vox, vox + full_size, 5.0);
+    std::fill(vox_check, vox_check + full_size, false);
 
 
     pcl::visualization::PCLVisualizer* viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+    pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
 
 
-
-    int set_number = parameters->getInt("set");
-    int scene_number = parameters->getInt("scene");
-    std::vector<visy::dataset::Annotation> annotations;
-    dataset.loadScene(set_number, scene_number, cloud, scene_rgb);
-
-
-
-
-    pcl::PointCloud<NormalType>::Ptr scene_normals(new pcl::PointCloud<NormalType>);
-    pcl::PointCloud<NormalType>::Ptr gravity_normals_cloud(new pcl::PointCloud<NormalType>);
-
-
-    pcl::IntegralImageNormalEstimation<PointType, NormalType> ne;
-    ne.setNormalEstimationMethod(ne.AVERAGE_3D_GRADIENT);
-    ne.setMaxDepthChangeFactor(0.02f);
-    ne.setNormalSmoothingSize(10.0f);
-    ne.setInputCloud(cloud);
-    ne.compute(*scene_normals);
-
-
-    cv::Point3f gravity;
-    gravityVector(cloud, gravity);
-
-
-
-    for (int i = 0; i < cloud->points.size(); i++) {
-        NormalType n;
-        n.normal_x = gravity.x;
-        n.normal_y = gravity.y;
-        n.normal_z = gravity.z;
-        gravity_normals_cloud->points.push_back(n);
+    //LOAD CLOUD  
+    int index = 14;
+    std::stringstream ss;
+    ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
+    ss << index<<".pcd";
+    if (pcl::io::loadPCDFile<PointType> (ss.str().c_str(), *cloud) == -1) //* load the file
+    {
+        PCL_ERROR("Couldn't read file test_pcd.pcd \n");
+        return (-1);
     }
 
-    Eigen::Vector3f zero;
-    zero << 0, 0, 0;
 
-    Eigen::Vector3f z;
-    z << 0, 0, 1;
-    Eigen::Vector3f x;
-    x << 1, 0, 0;
-    Eigen::Vector3f y;
-    y << 0, 1, 0;
-
-
-    Eigen::Vector3f gz;
-    gz << gravity.x, gravity.y, gravity.z;
-
-    Eigen::Vector3f gx;
-    gx << 1, 0, 0;
-
-    Eigen::Vector3f gy = gz.cross(gx);
-
-
-    visy::tools::draw3DVector(*viewer, zero, x, 1, 0, 0, "x");
-    visy::tools::draw3DVector(*viewer, zero, y, 0, 1, 0, "y");
-    visy::tools::draw3DVector(*viewer, zero, z, 0, 0, 1, "z");
-    visy::tools::draw3DVector(*viewer, zero, gx, 1, 0, 0, "gx");
-    visy::tools::draw3DVector(*viewer, zero, gy, 0, 1, 0, "gy");
-    visy::tools::draw3DVector(*viewer, zero, gz, 0, 0, 1, "gz");
-
-
-
-    int w = scene_rgb.cols;
-    int h = scene_rgb.rows;
-    cv::Mat igx = cv::Mat(h, w, CV_8UC1);
-    cv::Mat igy = cv::Mat(h, w, CV_8UC1);
-    cv::Mat igz = cv::Mat(h, w, CV_8UC1);
-
-    float quantum = parameters->getFloat("quantum");
-    for (int i = 0; i < scene_normals->points.size(); i++) {
-
-        Eigen::Vector3f np;
-        np << scene_normals->points[i].normal_x,
-                scene_normals->points[i].normal_y,
-                scene_normals->points[i].normal_z
-                ;
-
-
-        float mag_x = (np.dot(gx) + 1.0f) / 2.0f;
-        float mag_y = (np.dot(-gy) + 1.0f) / 2.0f;
-        float mag_z = (np.dot(gz) + 1.0f) / 2.0f;
-
-        igx.at<uchar>(i / w, i % w) = floor(mag_x * 255 / quantum) * quantum + quantum / 2.0f;
-        igy.at<uchar>(i / w, i % w) = floor(mag_y * 255 / quantum) * quantum + quantum / 2.0f;
-        igz.at<uchar>(i / w, i % w) = floor(mag_z * 255 / quantum) * quantum + quantum / 2.0f;
-
+    //LOAD MATRIX
+    Eigen::Matrix4f t;
+    ss.str("");
+    ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
+    ss << index<<".txt";
+    ifstream myReadFile;
+    std::cout << "Opening: " << ss.str().c_str() << std::endl;
+    myReadFile.open(ss.str().c_str());
+    char output[100];
+    if (myReadFile.is_open()) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                myReadFile >> output;
+                t(i, j) = atof(output);
+            }
+        }
+    } else {
+        std::cout << "BOH" << std::endl;
     }
-
-    cv::namedWindow("rgb", cv::WINDOW_NORMAL);
-    cv::namedWindow("igx", cv::WINDOW_NORMAL);
-    cv::namedWindow("igy", cv::WINDOW_NORMAL);
-    cv::namedWindow("igz", cv::WINDOW_NORMAL);
-
-    cv::imshow("rgb", scene_rgb);
-    cv::imshow("igx", igx);
-    cv::imshow("igy", igy);
-    cv::imshow("igz", igz);
+    myReadFile.close();
+    pcl::transformPointCloud(*cloud, *cloud_trans, t);
 
 
-    cv::Mat igz_edges = cv::Mat(h, w, CV_8UC1);
-    cv::Mat rgb_edges = cv::Mat(h, w, CV_8UC1);
-    /// Reduce noise with a kernel 3x3
-    cv::blur(igz, igz, cv::Size(3, 3));
-
-    float thresh = parameters->getFloat("edge_th");
-
-    /// Canny detector
-    cv::Canny(igz, igz_edges, thresh, thresh * 2, 3);
-    cv::Canny(scene_rgb, rgb_edges, thresh, thresh * 2, 3);
-    cv::imshow("igz_edges", igz_edges);
-    cv::imshow("rgb_edges", rgb_edges);
 
 
-    std::vector<cv::Vec3f> circles;
-    cv::Mat scene_gray;
-    cv::cvtColor(scene_rgb, scene_gray, cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(scene_gray, scene_gray, cv::Size(9, 9), 2, 2);
-    cv::Mat circles_img = scene_gray.clone();
-    /// Apply the Hough Transform to find the circles
-    cv::HoughCircles(scene_gray, circles, CV_HOUGH_GRADIENT, 1, scene_gray.rows / 8, 200, 100, 0, 0);
-
-    std::cout << "Circles: " << circles.size() << std::endl;
-    /// Draw the circles detected
-    for (size_t i = 0; i < circles.size(); i++) {
-        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        int radius = cvRound(circles[i][2]);
-        // circle center
-        cv::circle(circles_img, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
-        // circle outline
-        cv::circle(circles_img, center, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
-    }
-    cv::imshow("circles_img", circles_img);
-
-    viewer->addPointCloud(cloud, "scene");
-    viewer->addPointCloudNormals<PointType, NormalType>(cloud, gravity_normals_cloud);
-
-    // Creating the KdTree object for the search method of the extraction
-    //    pcl::search::KdTree<PointType>::Ptr tree(new pcl::search::KdTree<PointType>);
-    //    tree->setInputCloud(cloud_filtered);
     //
-    //    std::vector<pcl::PointIndices> cluster_indices;
-    //    pcl::EuclideanClusterExtraction<PointType> ec;
-    //    ec.setClusterTolerance(0.02); // 2cm
-    //    ec.setMinClusterSize(100);
-    //    ec.setMaxClusterSize(25000);
-    //    ec.setSearchMethod(tree);
-    //    ec.setInputCloud(cloud_filtered);
-    //    ec.extract(cluster_indices);
+    /* SCAN
+    for (int i = 0; i < cloud_trans->points.size(); i++) {
+        PointType p = cloud_trans->points[i];
+        if (!pcl::isFinite(p))continue;
+        
+        
+        float ix = floor(p.x / step);
+        float iy = floor(p.y / step);
+        float iz = floor(p.z / step);
+        ix += floor(offset_x / step);
+        iy += floor(offset_y / step);
+        iz += floor(offset_z / step);
+        if (ix < vw && iy < vw && iz < vw) {
+            if (ix > 0 && iy > 0 && iz > 0) {
+                int index = ix + vw * iy + vw * vw*iz;
+                vox[index] = 1.0;
+            }
+        }
+    }
+     * */
 
 
 
+
+
+    for (int i = 0; i < cloud_trans->points.size(); i++) {
+
+        int ix, iy, iz;
+        double x, y, z;
+        double d;
+
+        Eigen::Vector3f p0(t(0, 3), t(1, 3), t(2, 3));
+        Eigen::Vector3f p1;
+        Eigen::Vector3f px;
+        Eigen::Vector3f p01;
+        Eigen::Vector3f u01;
+        Eigen::Vector3f vStep;
+        Eigen::Vector3f cStep;
+        Eigen::Vector3f p0x;
+
+        if (i % 4 != 0)continue;
+
+        double per = ((double) i / (double) cloud_trans->points.size())*100;
+        std::cout << per << "%" << std::endl;
+
+        PointType p = cloud_trans->points[i];
+        if (!pcl::isFinite(p))continue;
+
+        p1 = Eigen::Vector3f(p.x, p.y, p.z);
+
+        p01 = p1 - p0;
+
+        u01 = p01 / p01.norm();
+
+        vStep = p1;
+        bool found = true;
+        while (found) {
+            float ix = floor(vStep(0) / step);
+            float iy = floor(vStep(1) / step);
+            float iz = floor(vStep(2) / step);
+            ix += floor(offset_x / step);
+            iy += floor(offset_y / step);
+            iz += floor(offset_z / step);
+            if (ix < vw && iy < vw && iz < vw) {
+                if (ix > 0 && iy > 0 && iz > 0) {
+                    int index = ix + vw * iy + vw * vw*iz;
+                    if(vox_check[index]){
+                        vStep = vStep + u01*step;
+                        continue;
+                    }
+                    cStep = Eigen::Vector3f(
+                            ix * step - offset_x,
+                            iy * step - offset_x,
+                            iz * step - offset_x
+                            );
+                    double rd = (vStep - p1).norm();
+                    rd = rd / sigma;
+                    vox[index] = -rd;
+                    vox_check[index]=true;
+                } else {
+                    found = false;
+                }
+            } else {
+                found = false;
+            }
+            vStep = vStep + u01*step;
+        }
+
+        vStep = p1;
+        found = true;
+        while (found) {
+
+
+            float ix = floor(vStep(0) / step);
+            float iy = floor(vStep(1) / step);
+            float iz = floor(vStep(2) / step);
+            ix += floor(offset_x / step);
+            iy += floor(offset_y / step);
+            iz += floor(offset_z / step);
+            if (ix < vw && iy < vw && iz < vw) {
+                if (ix > 0 && iy > 0 && iz > 0) {
+                    int index = ix + vw * iy + vw * vw*iz;
+                    if(vox_check[index]){
+                        vStep = vStep - u01*step;
+                        continue;
+                    }
+                    cStep = Eigen::Vector3f(
+                            ix * step - offset_x,
+                            iy * step - offset_x,
+                            iz * step - offset_x
+                            );
+                    double rd = (vStep - p1).norm();
+
+                    rd = rd / sigma;
+                    vox[index] = rd;
+                    vox_check[index]=true;
+                } else {
+                    found = false;
+                }
+            } else {
+                found = false;
+            }
+            vStep = vStep - u01*step;
+        }
+
+
+    }
+
+    pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
+    for (int i = 0; i < full_size; i++) {
+        if(!vox_check[i])continue;
+        //if (vox[i] >= 1.0f) {
+        int z = i / (vw * vw);
+        int y = (i % (vw * vw)) / vw;
+        int x = (i % (vw * vw)) % vw;
+        //        std::cout << "[" << x << "," << y << "," << z << "] " << std::endl;
+        PointType p;
+        p.x = x * step - offset_x;
+        p.y = y * step - offset_y;
+        p.z = z * step - offset_z;
+
+        int n1 = i + 1;
+        int n2 = i + vw;
+        int n3 = i + vw*vw;
+//        
+        bool test = true;
+        if (n1 < full_size && n2 < full_size && n3 < full_size) {
+            if(!vox_check[n1])continue;
+            if(!vox_check[n2])continue;
+            if(!vox_check[n3])continue;
+            
+            //            double f = vox[i]*vox[i];
+            //            double fx = vox[n1]*vox[n1];
+            //            double fy = vox[n2]*vox[n2];
+            //            double fz = vox[n3]*vox[n3];
+            //            double dx = f-fx;
+            //            double dy = f-fy;
+            //            double dz = f-fz;
+            //            double mag = dx*dx+dy*dy+dz*dz;
+
+            //            if (vox[i] < 1) {
+            //                std::cout << "Test: " << vox[i] << " -> " << vox[n1] << "   (" << i << "/" << n1 << ")" << std::endl;
+            //            }
+            if ((vox[i] >= 0 && vox[n1] < 0)||(vox[i] < 0 && vox[n1] >= 0)) {
+                test = false;
+            }
+            if ((vox[i] >= 0 && vox[n2] < 0)||(vox[i] < 0 && vox[n2] >= 0)) {
+                test = false;
+            }
+            if ((vox[i] >= 0 && vox[n3] < 0)||(vox[i] < 0 && vox[n3] >= 0)) {
+                test = false;
+            }
+
+        }
+        if (!test) {
+            p.r = 255;
+            p.g = 255;
+            p.b = 255;
+            cloud_vox->points.push_back(p);
+        }
+
+//                        if (abs(vox[i]) <= 1.0)
+//                            if (vox[i] >= 0) {
+//                                p.r = (255.0 - vox[i]*255.0);
+//                                p.g = 0;
+//                                p.b = 0;
+//                                cloud_vox->points.push_back(p);
+//                            } else {
+//                                p.r = 0;
+//                                p.g = (255.0 + vox[i]*255.0);
+//                                p.b = 0;
+//                                cloud_vox->points.push_back(p);
+//                            }
+    }
+
+
+
+
+
+
+    std::cout << t << std::endl;
+
+
+
+    viewer->addPointCloud(cloud_vox, "cloud_vox");
+//        viewer->addPointCloud(cloud_trans, "cloud");
+    Eigen::Affine3f A;
+    A = t;
+    viewer->addCoordinateSystem(1.0, A);
     while (!viewer->wasStopped()) {
         viewer->spinOnce();
         cv::waitKey(10);
