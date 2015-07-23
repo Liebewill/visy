@@ -46,6 +46,7 @@ include_directories (${BOLD_INCLUDE_DIR})     # make sure your .h all inside.
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/commons 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/structure
     ${CMAKE_CURRENT_SOURCE_DIR}/include/extractors 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/descriptors
     ${CMAKE_CURRENT_SOURCE_DIR}/include/descriptors/dfunctions
@@ -62,6 +63,15 @@ add_library(visy_commons
 target_link_libraries (visy_commons ${PCL_LIBRARIES})
 target_link_libraries (visy_commons ${OpenCV_LIBS})
 target_link_libraries (visy_commons ${BOLD_LIBRARIES})
+
+#VISY STRUCTURE
+add_library(visy_structure
+    src/structure/Voxy.cpp
+)
+target_link_libraries (visy_structure ${PCL_LIBRARIES})
+target_link_libraries (visy_structure ${OpenCV_LIBS})
+target_link_libraries (visy_structure ${BOLD_LIBRARIES})
+
 
 #VISY EXTRACTORS
 add_library(visy_extractors 
@@ -164,6 +174,7 @@ target_link_libraries(
     ${BOLD_LIBRARIES} 
     ${OpenCV_LIBS} 
     visy_commons 
+    visy_structure
     visy_extractors
     visy_descriptors
     visy_detectors

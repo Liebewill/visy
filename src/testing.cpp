@@ -17,6 +17,7 @@
 
 #include "Parameters.h"
 #include "WillowDataset.h"
+#include "Voxy.h"
 
 /** SCENE */
 std::vector<visy::extractors::KeyPoint3D> scene_keypoints;
@@ -189,6 +190,40 @@ void gravityVector(pcl::PointCloud<PointType>::Ptr cloud, cv::Point3f& gravity_v
 }
  */
 
+
+void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
+    
+    std::stringstream ss;
+    ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
+    ss << index << ".pcd";
+    if (pcl::io::loadPCDFile<PointType> (ss.str().c_str(), *cloud) == -1) //* load the file
+    {
+        PCL_ERROR("Couldn't read file test_pcd.pcd \n");
+
+    }
+
+    //LOAD MATRIX
+    ss.str("");
+    ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
+    ss << index << ".txt";
+    ifstream myReadFile;
+    std::cout << "Opening: " << ss.str().c_str() << std::endl;
+    myReadFile.open(ss.str().c_str());
+    char output[100];
+    if (myReadFile.is_open()) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                myReadFile >> output;
+                t(i, j) = atof(output);
+            }
+        }
+    } else {
+        std::cout << "BOH" << std::endl;
+    }
+    myReadFile.close();
+    
+}
+
 int
 main(int argc, char** argv) {
     /** PARAMETERS */
@@ -211,233 +246,71 @@ main(int argc, char** argv) {
     parameters->putFloat("edge_th");
 
 
-    int vw = 256;
-    int full_size = vw * vw*vw;
-    double max_dim = 2.0;
-    double offset_x = 0.0;
-    double offset_y = 1.0;
-    double offset_z = 1.0;
-    double step = max_dim / (double) vw;
-    double* vox = new double[vw * vw * vw];
-    bool* vox_check = new bool[vw * vw * vw];
-    double sigma = step * 10;
-    std::fill(vox, vox + full_size, 5.0);
-    std::fill(vox_check, vox_check + full_size, false);
 
 
     pcl::visualization::PCLVisualizer* viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
     pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
 
-
-    //LOAD CLOUD  
-    int index = 14;
-    std::stringstream ss;
-    ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
-    ss << index<<".pcd";
-    if (pcl::io::loadPCDFile<PointType> (ss.str().c_str(), *cloud) == -1) //* load the file
-    {
-        PCL_ERROR("Couldn't read file test_pcd.pcd \n");
-        return (-1);
-    }
-
-
-    //LOAD MATRIX
     Eigen::Matrix4f t;
-    ss.str("");
-    ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
-    ss << index<<".txt";
-    ifstream myReadFile;
-    std::cout << "Opening: " << ss.str().c_str() << std::endl;
-    myReadFile.open(ss.str().c_str());
-    char output[100];
-    if (myReadFile.is_open()) {
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                myReadFile >> output;
-                t(i, j) = atof(output);
-            }
-        }
-    } else {
-        std::cout << "BOH" << std::endl;
+
+    int size = 256;
+    int full_size = size * size*size;
+
+    Eigen::Vector3f offset(0.0, 1.0, 1.0);
+
+    visy::Voxy voxy(size, 2.0, 20.0 / (double) size, offset);
+
+
+    for (int i = 0; i < 1 ; i++) {
+        pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
+        Eigen::Matrix4f t;
+        loadCloud(i, cloud, t);
+        pcl::transformPointCloud(*cloud, *cloud_trans, t);
+        Eigen::Vector3f pov(t(0, 3), t(1, 3), t(2, 3));
+        voxy.addPointCloud(cloud, pov);
     }
-    myReadFile.close();
-    pcl::transformPointCloud(*cloud, *cloud_trans, t);
 
-
-
-
-    //
-    /* SCAN
-    for (int i = 0; i < cloud_trans->points.size(); i++) {
-        PointType p = cloud_trans->points[i];
-        if (!pcl::isFinite(p))continue;
-        
-        
-        float ix = floor(p.x / step);
-        float iy = floor(p.y / step);
-        float iz = floor(p.z / step);
-        ix += floor(offset_x / step);
-        iy += floor(offset_y / step);
-        iz += floor(offset_z / step);
-        if (ix < vw && iy < vw && iz < vw) {
-            if (ix > 0 && iy > 0 && iz > 0) {
-                int index = ix + vw * iy + vw * vw*iz;
-                vox[index] = 1.0;
-            }
-        }
-    }
-     * */
-
-
-
-
-
-    for (int i = 0; i < cloud_trans->points.size(); i++) {
-
-        int ix, iy, iz;
-        double x, y, z;
-        double d;
-
-        Eigen::Vector3f p0(t(0, 3), t(1, 3), t(2, 3));
-        Eigen::Vector3f p1;
-        Eigen::Vector3f px;
-        Eigen::Vector3f p01;
-        Eigen::Vector3f u01;
-        Eigen::Vector3f vStep;
-        Eigen::Vector3f cStep;
-        Eigen::Vector3f p0x;
-
-        if (i % 4 != 0)continue;
-
-        double per = ((double) i / (double) cloud_trans->points.size())*100;
-        std::cout << per << "%" << std::endl;
-
-        PointType p = cloud_trans->points[i];
-        if (!pcl::isFinite(p))continue;
-
-        p1 = Eigen::Vector3f(p.x, p.y, p.z);
-
-        p01 = p1 - p0;
-
-        u01 = p01 / p01.norm();
-
-        vStep = p1;
-        bool found = true;
-        while (found) {
-            float ix = floor(vStep(0) / step);
-            float iy = floor(vStep(1) / step);
-            float iz = floor(vStep(2) / step);
-            ix += floor(offset_x / step);
-            iy += floor(offset_y / step);
-            iz += floor(offset_z / step);
-            if (ix < vw && iy < vw && iz < vw) {
-                if (ix > 0 && iy > 0 && iz > 0) {
-                    int index = ix + vw * iy + vw * vw*iz;
-                    if(vox_check[index]){
-                        vStep = vStep + u01*step;
-                        continue;
-                    }
-                    cStep = Eigen::Vector3f(
-                            ix * step - offset_x,
-                            iy * step - offset_x,
-                            iz * step - offset_x
-                            );
-                    double rd = (vStep - p1).norm();
-                    rd = rd / sigma;
-                    vox[index] = -rd;
-                    vox_check[index]=true;
-                } else {
-                    found = false;
-                }
-            } else {
-                found = false;
-            }
-            vStep = vStep + u01*step;
-        }
-
-        vStep = p1;
-        found = true;
-        while (found) {
-
-
-            float ix = floor(vStep(0) / step);
-            float iy = floor(vStep(1) / step);
-            float iz = floor(vStep(2) / step);
-            ix += floor(offset_x / step);
-            iy += floor(offset_y / step);
-            iz += floor(offset_z / step);
-            if (ix < vw && iy < vw && iz < vw) {
-                if (ix > 0 && iy > 0 && iz > 0) {
-                    int index = ix + vw * iy + vw * vw*iz;
-                    if(vox_check[index]){
-                        vStep = vStep - u01*step;
-                        continue;
-                    }
-                    cStep = Eigen::Vector3f(
-                            ix * step - offset_x,
-                            iy * step - offset_x,
-                            iz * step - offset_x
-                            );
-                    double rd = (vStep - p1).norm();
-
-                    rd = rd / sigma;
-                    vox[index] = rd;
-                    vox_check[index]=true;
-                } else {
-                    found = false;
-                }
-            } else {
-                found = false;
-            }
-            vStep = vStep - u01*step;
-        }
-
-
-    }
 
     pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
     for (int i = 0; i < full_size; i++) {
-        if(!vox_check[i])continue;
+//        if (!voxy.voxel_data_pin[i])continue;
         //if (vox[i] >= 1.0f) {
-        int z = i / (vw * vw);
-        int y = (i % (vw * vw)) / vw;
-        int x = (i % (vw * vw)) % vw;
-        //        std::cout << "[" << x << "," << y << "," << z << "] " << std::endl;
+        Eigen::Vector3f point;
+        voxy.pointToIndex(point, i, true);
+        //        
         PointType p;
-        p.x = x * step - offset_x;
-        p.y = y * step - offset_y;
-        p.z = z * step - offset_z;
+        p.x = point(0);
+        p.y = point(1);
+        p.z = point(2);
+
+        //         int z = i / (vw * vw);
+        //        int y = (i % (vw * vw)) / vw;
+        //        int x = (i % (vw * vw)) % vw;
+        //        //        std::cout << "[" << x << "," << y << "," << z << "] " << std::endl;
+        //        PointType p;
+        //        p.x = x * step - 0;
+        //        p.y = y * step - 1.0;
+        //        p.z = z * step - 1.0;
 
         int n1 = i + 1;
-        int n2 = i + vw;
-        int n3 = i + vw*vw;
-//        
+        int n2 = i + size;
+        int n3 = i + size*size;
+        //        
         bool test = true;
         if (n1 < full_size && n2 < full_size && n3 < full_size) {
-            if(!vox_check[n1])continue;
-            if(!vox_check[n2])continue;
-            if(!vox_check[n3])continue;
-            
-            //            double f = vox[i]*vox[i];
-            //            double fx = vox[n1]*vox[n1];
-            //            double fy = vox[n2]*vox[n2];
-            //            double fz = vox[n3]*vox[n3];
-            //            double dx = f-fx;
-            //            double dy = f-fy;
-            //            double dz = f-fz;
-            //            double mag = dx*dx+dy*dy+dz*dz;
+//            if (!voxy.voxel_data_pin[n1])continue;
+//            if (!voxy.voxel_data_pin[n2])continue;
+//            if (!voxy.voxel_data_pin[n3])continue;
 
-            //            if (vox[i] < 1) {
-            //                std::cout << "Test: " << vox[i] << " -> " << vox[n1] << "   (" << i << "/" << n1 << ")" << std::endl;
-            //            }
-            if ((vox[i] >= 0 && vox[n1] < 0)||(vox[i] < 0 && vox[n1] >= 0)) {
+            if ((voxy.voxel_data[i] >= 0 && voxy.voxel_data[n1] < 0) || (voxy.voxel_data[i] < 0 && voxy.voxel_data[n1] >= 0)) {
                 test = false;
             }
-            if ((vox[i] >= 0 && vox[n2] < 0)||(vox[i] < 0 && vox[n2] >= 0)) {
+            if ((voxy.voxel_data[i] >= 0 && voxy.voxel_data[n2] < 0) || (voxy.voxel_data[i] < 0 && voxy.voxel_data[n2] >= 0)) {
                 test = false;
             }
-            if ((vox[i] >= 0 && vox[n3] < 0)||(vox[i] < 0 && vox[n3] >= 0)) {
+            if ((voxy.voxel_data[i] >= 0 && voxy.voxel_data[n3] < 0) || (voxy.voxel_data[i] < 0 && voxy.voxel_data[n3] >= 0)) {
                 test = false;
             }
 
@@ -449,18 +322,18 @@ main(int argc, char** argv) {
             cloud_vox->points.push_back(p);
         }
 
-//                        if (abs(vox[i]) <= 1.0)
-//                            if (vox[i] >= 0) {
-//                                p.r = (255.0 - vox[i]*255.0);
-//                                p.g = 0;
-//                                p.b = 0;
-//                                cloud_vox->points.push_back(p);
-//                            } else {
-//                                p.r = 0;
-//                                p.g = (255.0 + vox[i]*255.0);
-//                                p.b = 0;
-//                                cloud_vox->points.push_back(p);
-//                            }
+        //        if (abs(voxy.voxel_data[i]) <= 1.0)
+        //            if (voxy.voxel_data[i] >= 0) {
+        //                p.r = (255.0 - voxy.voxel_data[i]*255.0);
+        //                p.g = 0;
+        //                p.b = 0;
+        //                cloud_vox->points.push_back(p);
+        //            } else {
+        //                p.r = 0;
+        //                p.g = (255.0 + voxy.voxel_data[i]*255.0);
+        //                p.b = 0;
+        //                cloud_vox->points.push_back(p);
+        //                }
     }
 
 
@@ -473,7 +346,7 @@ main(int argc, char** argv) {
 
 
     viewer->addPointCloud(cloud_vox, "cloud_vox");
-//        viewer->addPointCloud(cloud_trans, "cloud");
+//    viewer->addPointCloud(cloud_trans, "cloud");
     Eigen::Affine3f A;
     A = t;
     viewer->addCoordinateSystem(1.0, A);
