@@ -34,7 +34,8 @@ int current_index = 0;
 visy::Voxy* voxy;
 pcl::visualization::PCLVisualizer* viewer;
 pcl::PointCloud<PointType>::Ptr full_cloud(new pcl::PointCloud<PointType>());
-
+    typedef pcl::PointNormal XYZNormalType;
+    
 void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
 
     std::stringstream ss;
@@ -85,7 +86,7 @@ void addPointCloudToVox(visy::Voxy* voxy, int index) {
     voxy->voxelToCloudZeroCrossing(cloud_vox);
 
 
-    typedef pcl::PointNormal XYZNormalType;
+
 
     // Create a KD-Tree
     pcl::search::KdTree<PointType>::Ptr tree(new pcl::search::KdTree<PointType>);
@@ -129,10 +130,10 @@ void addPointCloudToVox(visy::Voxy* voxy, int index) {
     viewer->addPointCloud(scene, "cloud_vox");
     viewer->spinOnce();
 
-//    if (current_index > 5) {
-//        addPointCloudToVox(voxy, current_index);
-//        current_index += 5;
-//    }
+    //    if (current_index > 5) {
+    //        addPointCloudToVox(voxy, current_index);
+    //        current_index += 5;
+    //    }
 }
 
 void addPointCloudToViewer(int index) {
@@ -201,7 +202,7 @@ void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
         if (current_index < 60) {
             //            addPointCloudToViewer(current_index);
             addPointCloudToVox(voxy, current_index);
-            current_index += 5;
+            current_index += 1;
         }
     }
 }
@@ -230,6 +231,63 @@ main(int argc, char** argv) {
     voxy = new visy::Voxy(size, 2.0, 0.01f, offset);
 
 
+    for (int i = 0; i < 50; i+=1) {
+        pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
+        Eigen::Matrix4f t;
+        loadCloud(i, cloud, t);
+
+        t = t*adjust;
+
+        pcl::transformPointCloud(*cloud, *cloud_trans, t);
+        Eigen::Vector3f pov(t(0, 3), t(1, 3), t(2, 3));
+        voxy->addPointCloud(cloud_trans, pov);
+    }
+
+
+    pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
+    voxy->voxelToCloudZeroCrossing(cloud_vox);
+
+    // Create a KD-Tree
+    pcl::search::KdTree<PointType>::Ptr tree(new pcl::search::KdTree<PointType>);
+
+    // Output has the PointNormal type in order to store the normals calculated by MLS
+    pcl::PointCloud<XYZNormalType>::Ptr mls_points(new pcl::PointCloud<XYZNormalType>());
+    // Init object (second point type is for the normals, even if unused)
+    pcl::MovingLeastSquares<PointType, XYZNormalType> mls;
+
+    mls.setComputeNormals(true);
+
+    // Set parameters
+    mls.setInputCloud(cloud_vox);
+    mls.setPolynomialFit(true);
+    mls.setSearchMethod(tree);
+    mls.setSearchRadius(0.05);
+    mls.setPolynomialOrder(2);
+    //    mls.setUpsamplingMethod(pcl::MovingLeastSquares<PointType,XYZNormalType>::SAMPLE_LOCAL_PLANE);
+    //    mls.setUpsamplingRadius(0.005);
+    //    mls.setUpsamplingStepSize(0.003);
+    // Reconstruct
+    mls.process(*mls_points);
+
+    pcl::PointCloud<PointType>::Ptr scene(new pcl::PointCloud<PointType>());
+
+    for (int i = 0; i < mls_points->points.size(); i++) {
+        PointType p;
+        pcl::PointNormal n = mls_points->points[i];
+        p.x = n.x;
+        p.y = n.y;
+        p.z = n.z;
+        p.r = 255;
+        p.g = 255;
+        p.b = 255;
+
+        scene->points.push_back(p);
+    }
+
+
+    viewer->removeAllPointClouds();
+    viewer->addPointCloud(scene, "cloud_vox");
 
     //
     //        typedef pcl::PointNormal XYZNormalType;
