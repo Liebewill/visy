@@ -84,9 +84,9 @@ namespace visy {
         while (!boundary_left) {
             boundary_left = !pointToIndex(cursor_left, index_left);
             d = truncatedDistance(point, cursor_left);
-//            if (d > 1.0f) {
-//                break;
-//            }
+            if (d > 1.0f) {
+                break;
+            }
             if (!boundary_left) {
                 if (this->voxel_data_counter[index_left] < this->round_counter) {
                     this->voxel_data_counter[index_left]++;
@@ -117,7 +117,7 @@ namespace visy {
         std::fill(this->voxel_data_pin, this->voxel_data_pin + (int) this->edge_full_size, false);
         this->round_counter++;
         for (int i = 0; i < cloud->points.size(); i++) {
-            if(i%2!=0)continue;
+            if(i%10!=0)continue;
 //            int x = i % 640;
 //            int y = i / 640;
 //            if (x > 160 && x < 480 && y > 120 && y < 360) {
