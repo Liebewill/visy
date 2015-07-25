@@ -14,6 +14,13 @@
 #include <pcl/registration/transformation_estimation_lm.h>
 #include <pcl/filters/fast_bilateral.h>
 #include <pcl/filters/bilateral.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/surface/poisson.h>
+#include <pcl/io/vtk_io.h>
+
+#include <pcl/kdtree/kdtree_flann.h>
+//#include <pcl/surface/mls.h>
+#include <pcl/surface/impl/mls.hpp>
 
 #include "Parameters.h"
 #include "WillowDataset.h"
@@ -192,7 +199,7 @@ void gravityVector(pcl::PointCloud<PointType>::Ptr cloud, cv::Point3f& gravity_v
 
 
 void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
-    
+
     std::stringstream ss;
     ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
     ss << index << ".pcd";
@@ -221,7 +228,7 @@ void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4
         std::cout << "BOH" << std::endl;
     }
     myReadFile.close();
-    
+
 }
 
 int
@@ -249,111 +256,98 @@ main(int argc, char** argv) {
 
 
     pcl::visualization::PCLVisualizer* viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
-    pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
-    pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
 
-    Eigen::Matrix4f t;
 
     int size = 256;
     int full_size = size * size*size;
+    double step = 2.0f / (double) size;
 
     Eigen::Vector3f offset(0.0, 1.0, 1.0);
 
-    visy::Voxy voxy(size, 2.0, 20.0 / (double) size, offset);
+    visy::Voxy voxy(size, 2.0, 0.01f, offset);
 
+    Eigen::Matrix4f adjust;
+    adjust <<
+            1, 0, 0, -0.01,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
 
-    for (int i = 0; i < 1 ; i++) {
+    for (int i = 0; i <= 70; i += 10) {
         pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
         Eigen::Matrix4f t;
-        loadCloud(i, cloud, t);
+        int index = i;
+
+        loadCloud(index, cloud, t);
+
+        t = t*adjust;
+
         pcl::transformPointCloud(*cloud, *cloud_trans, t);
         Eigen::Vector3f pov(t(0, 3), t(1, 3), t(2, 3));
-        voxy.addPointCloud(cloud, pov);
+        voxy.addPointCloud(cloud_trans, pov);
+        //        
+        //        std::stringstream ss;
+        //        ss << "Cloud_"<<i;
+        //        viewer->addPointCloud(cloud_trans, ss.str().c_str());
     }
-
 
     pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
-    for (int i = 0; i < full_size; i++) {
-//        if (!voxy.voxel_data_pin[i])continue;
-        //if (vox[i] >= 1.0f) {
-        Eigen::Vector3f point;
-        voxy.pointToIndex(point, i, true);
-        //        
-        PointType p;
-        p.x = point(0);
-        p.y = point(1);
-        p.z = point(2);
 
-        //         int z = i / (vw * vw);
-        //        int y = (i % (vw * vw)) / vw;
-        //        int x = (i % (vw * vw)) % vw;
-        //        //        std::cout << "[" << x << "," << y << "," << z << "] " << std::endl;
-        //        PointType p;
-        //        p.x = x * step - 0;
-        //        p.y = y * step - 1.0;
-        //        p.z = z * step - 1.0;
+    voxy.voxelToCloudZeroCrossing(cloud_vox);
 
-        int n1 = i + 1;
-        int n2 = i + size;
-        int n3 = i + size*size;
-        //        
-        bool test = true;
-        if (n1 < full_size && n2 < full_size && n3 < full_size) {
-//            if (!voxy.voxel_data_pin[n1])continue;
-//            if (!voxy.voxel_data_pin[n2])continue;
-//            if (!voxy.voxel_data_pin[n3])continue;
+   
+    typedef  pcl::PointNormal XYZNormalType;
+    
+    // Create a KD-Tree
+    pcl::search::KdTree<PointType>::Ptr tree(new pcl::search::KdTree<PointType>);
 
-            if ((voxy.voxel_data[i] >= 0 && voxy.voxel_data[n1] < 0) || (voxy.voxel_data[i] < 0 && voxy.voxel_data[n1] >= 0)) {
-                test = false;
-            }
-            if ((voxy.voxel_data[i] >= 0 && voxy.voxel_data[n2] < 0) || (voxy.voxel_data[i] < 0 && voxy.voxel_data[n2] >= 0)) {
-                test = false;
-            }
-            if ((voxy.voxel_data[i] >= 0 && voxy.voxel_data[n3] < 0) || (voxy.voxel_data[i] < 0 && voxy.voxel_data[n3] >= 0)) {
-                test = false;
-            }
+    // Output has the PointNormal type in order to store the normals calculated by MLS
+    pcl::PointCloud<XYZNormalType>::Ptr mls_points(new pcl::PointCloud<XYZNormalType>());;
 
-        }
-        if (!test) {
-            p.r = 255;
-            p.g = 255;
-            p.b = 255;
-            cloud_vox->points.push_back(p);
-        }
+    // Init object (second point type is for the normals, even if unused)
+    pcl::MovingLeastSquares<PointType, XYZNormalType> mls;
 
-        //        if (abs(voxy.voxel_data[i]) <= 1.0)
-        //            if (voxy.voxel_data[i] >= 0) {
-        //                p.r = (255.0 - voxy.voxel_data[i]*255.0);
-        //                p.g = 0;
-        //                p.b = 0;
-        //                cloud_vox->points.push_back(p);
-        //            } else {
-        //                p.r = 0;
-        //                p.g = (255.0 + voxy.voxel_data[i]*255.0);
-        //                p.b = 0;
-        //                cloud_vox->points.push_back(p);
-        //                }
-    }
+    mls.setComputeNormals(true);
 
+    // Set parameters
+    mls.setInputCloud(cloud_vox);
+    mls.setPolynomialFit(true);
+    mls.setSearchMethod(tree);
+    mls.setSearchRadius(0.05);
+    mls.setPolynomialOrder(2);
+//    mls.setUpsamplingMethod(pcl::MovingLeastSquares<PointType,XYZNormalType>::SAMPLE_LOCAL_PLANE);
+//    mls.setUpsamplingRadius(0.005);
+//    mls.setUpsamplingStepSize(0.003);
+    // Reconstruct
+    mls.process(*mls_points);
 
-
-
-
-
-    std::cout << t << std::endl;
-
+    // Save output
+    pcl::io::savePCDFile("bun0-mls.pcd", *mls_points);
 
 
     viewer->addPointCloud(cloud_vox, "cloud_vox");
-//    viewer->addPointCloud(cloud_trans, "cloud");
-    Eigen::Affine3f A;
-    A = t;
-    viewer->addCoordinateSystem(1.0, A);
+
+
+    //    viewer->addPointCloud(cloud_trans, "cloud");
+    //    Eigen::Affine3f A;
+    //    A = t;
+    //    viewer->addCoordinateSystem(1.0, A);
     while (!viewer->wasStopped()) {
         viewer->spinOnce();
         cv::waitKey(10);
     }
+    
+    
+//    pcl::Poisson<XYZNormalType> poisson;
+//    poisson.setDepth (9);
+//    poisson.setInputCloud (mls_points);
+//    pcl::PolygonMesh mesh;
+//    poisson.reconstruct (mesh);
+//    pcl::io::saveVTKFile ("/home/daniele/Desktop/sreconstruc.vtk",mesh);
+    
+    pcl::io::savePLYFileASCII("/home/daniele/Desktop/mls.ply", *mls_points);
+    pcl::io::savePLYFileASCII("/home/daniele/Desktop/output.ply", *cloud_vox);
 
     return (0);
 }

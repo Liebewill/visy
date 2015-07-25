@@ -23,10 +23,14 @@ namespace visy {
         bool pointToIndex(Eigen::Vector3f& point, int& index, bool reverse = false);
         double truncatedDistance(Eigen::Vector3f& p1, Eigen::Vector3f& p2);
         
+        
+        void voxelToCloudZeroCrossing(pcl::PointCloud<PointType>::Ptr& cloud_out);
+        
         double* voxel_data;
         bool* voxel_data_pin;
+        int* voxel_data_counter;
     private:
-        
+        int round_counter;
         double edge_size;
         double edge_square_size;
         double edge_full_size;
