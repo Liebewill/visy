@@ -295,39 +295,39 @@ void nextRound() {
             6500
             );
 
-    //Draw z-slice colore
-    //        for (int z = 0; z < emap->size; z++) {
-    //            pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
-    //            std::vector<int> slice;
-    //            
-    //            for (int i = 0; i < cloud->points.size(); i++) {
-    //                int index = emap->pointIndex(cloud->points[i].z);
-    //                if(index==z){
-    //                    slice.push_back(i);
-    //                }
-    //            }
-    //            
-    //            pcl::copyPointCloud(*cloud,slice,*cluster);
-    //            showCloud(cluster, rand()*255, rand()*255, rand()*255, 3.0f, buildNameWithNumber("cluster", z));
-    //    
-    //        }
+//    Draw z-slice colore
+            for (int z = 0; z < emap->size; z++) {
+                pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
+                std::vector<int> slice;
+                
+                for (int i = 0; i < cloud->points.size(); i++) {
+                    int index = emap->pointIndex(cloud->points[i].z);
+                    if(index==z){
+                        slice.push_back(i);
+                    }
+                }
+                
+                pcl::copyPointCloud(*cloud,slice,*cluster);
+                showCloud(cluster, rand()*255, rand()*255, rand()*255, 3.0f, buildNameWithNumber("cluster", z));
+        
+            }
 
 
-    std::vector<pcl::PointIndices> cluster_indices;
-
-    pcl::copyPointCloud(*cloud, withoutplanes_indices, *cloud_without_planes);
-    buildClusters(cloud_without_planes, cluster_indices);
-
-    for (int i = 0; i < cluster_indices.size(); i++) {
-        pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
-        pcl::copyPointCloud(*cloud_without_planes, cluster_indices[i], *cluster);
-        Eigen::Vector3i color=  palette.getColor();
-        showCloud(cluster, color(0), color(1), color(2), 3.0f, buildNameWithNumber("cluster", i));
-    }
-
-    pcl::PointCloud<PointType>::Ptr planes(new pcl::PointCloud<PointType>);
-    pcl::copyPointCloud(*cloud, planes_indices, *planes);
-    showCloud(planes, 0, 125, 0, 5.0f, buildNameWithNumber("planes", 0));
+//    std::vector<pcl::PointIndices> cluster_indices;
+//
+//    pcl::copyPointCloud(*cloud, withoutplanes_indices, *cloud_without_planes);
+//    buildClusters(cloud_without_planes, cluster_indices);
+//
+//    for (int i = 0; i < cluster_indices.size(); i++) {
+//        pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
+//        pcl::copyPointCloud(*cloud_without_planes, cluster_indices[i], *cluster);
+//        Eigen::Vector3i color=  palette.getColor();
+//        showCloud(cluster, color(0), color(1), color(2), 3.0f, buildNameWithNumber("cluster", i));
+//    }
+//
+//    pcl::PointCloud<PointType>::Ptr planes(new pcl::PointCloud<PointType>);
+//    pcl::copyPointCloud(*cloud, planes_indices, *planes);
+//    showCloud(planes, 0, 125, 0, 5.0f, buildNameWithNumber("planes", 0));
 
 }
 
@@ -347,7 +347,6 @@ main(int argc, char** argv) {
     /** PARAMETERS */
     parameters = new visy::Parameters(argc, argv);
 
-
     adjust <<
             1, 0, 0, -0.01,
             0, 1, 0, 0,
@@ -366,176 +365,14 @@ main(int argc, char** argv) {
     voxy = new visy::Voxy(size, 2.0, 0.01f, offset);
 
     /** ELEVATOR MAP */
-    emap = new ElevatorMap(2.0, 0.025, 1.02);
+    emap = new ElevatorMap(2.0, 0.02, 1.02);
 
-    /** LOAD CLOUD */
-    //    for (int i = 0; i <= 50; i += 5) {
-    //    int index = 0;
-    //    pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
-    //    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
-    //
-    //    processCloud(voxy,index,cloud,cloud_normals);
-    //
-    //
-    //    showCloud(cloud, 255, 255, 255, 3, "boxel_filtred");
-    //
-
-
-    //    elevatorPlanesCheck(cloud_trans, cloud_normals, filtered_indices, planes_indices, 30.0, emap, 15000);
-
-    //    pcl::copyPointCloud(*cloud_trans, filtered_indices, *cloud_filtered);
-
-
-    //    viewer->addPointCloud(cloud_filtered, "cloud_vox");
-
-
-
-
-    //    std::vector<pcl::PointIndices> cluster_indices;
-    //    buildClusters(cloud_filtered, cluster_indices);
-    //
-    //
-    //
-    //    for (int i = 0; i < cluster_indices.size(); i++) {
-    //            pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
-    //            pcl::copyPointCloud(*cloud_filtered, cluster_indices[i], *cluster);
-    //        voxy->addCluster(cluster);
-    //    }
-    //
-    //    //    }
-    //
-    //    pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
-    //    std::vector<int> labels;
-    //    voxy->voxelToCloud(cloud_vox, labels);
-    //
-    //    for (int j = -1; j < voxy->labelsCount(); j++) {
-    //        pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
-    //        std::vector<int> indices;
-    //        for (int i = 0; i < labels.size(); i++) {
-    //            if (labels[i] == j) {
-    //                indices.push_back(i);
-    //            }
-    //        }
-    //        pcl::copyPointCloud(*cloud_vox, indices, *cluster);
-    //        std::stringstream ss;
-    //        ss << "cluster_" << j;
-    //        showCloud(cluster, rand()*255, rand()*255, rand()*255, 3, ss.str());
-    //    }
-
-    //showCloud(cloud_vox,255,255,255,2,"VOX");
-
-    //
-    //
-    //    //
-    //    for (int i = 0; i < cluster_indices.size(); i++) {
-    //        pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
-    //        pcl::copyPointCloud(*cloud_filtered, cluster_indices[i], *cluster);
-    //        std::stringstream ss;
-    //        ss << "cluster_" << i;
-    //        showCloud(cluster, rand()*255, rand()*255, rand()*255, 2, ss.str());
-    //    }
-    //
-    //    pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
-    //    pcl::copyPointCloud(*cloud_trans, planes_indices, *cluster);
-    //    showCloud(cluster, rand()*255, rand()*255, rand()*255, 2, "planes");
-
-
-
-    //    viewer->addPointCloud(cloud_filtered, "cloud");
-    //    viewer->addPointCloudNormals<PointType, pcl::Normal>(cloud_filtered, cloud_normals, 100, 0.02, "normals");
-
-
-    //        pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
-    //        voxy->voxelToCloudZeroCrossing(cloud_vox);
-    //
-    //    // Create a KD-Tree
-    //    pcl::search::KdTree<PointType>::Ptr tree(new pcl::search::KdTree<PointType>);
-    //
-    //    // Output has the PointNormal type in order to store the normals calculated by MLS
-    //    pcl::PointCloud<XYZNormalType>::Ptr mls_points(new pcl::PointCloud<XYZNormalType>());
-    //    // Init object (second point type is for the normals, even if unused)
-    //    pcl::MovingLeastSquares<PointType, XYZNormalType> mls;
-    //
-    //    mls.setComputeNormals(true);
-    //
-    //    // Set parameters
-    //    mls.setInputCloud(cloud_vox);
-    //    mls.setPolynomialFit(true);
-    //    mls.setSearchMethod(tree);
-    //    mls.setSearchRadius(0.05);
-    //    mls.setPolynomialOrder(2);
-    //    //    mls.setUpsamplingMethod(pcl::MovingLeastSquares<PointType,XYZNormalType>::SAMPLE_LOCAL_PLANE);
-    //    //    mls.setUpsamplingRadius(0.005);
-    //    //    mls.setUpsamplingStepSize(0.003);
-    //    // Reconstruct
-    //    mls.process(*mls_points);
-    //
-    //    pcl::PointCloud<PointType>::Ptr scene(new pcl::PointCloud<PointType>());
-    //
-    //    for (int i = 0; i < mls_points->points.size(); i++) {
-    //        PointType p;
-    //        pcl::PointNormal n = mls_points->points[i];
-    //        p.x = n.x;
-    //        p.y = n.y;
-    //        p.z = n.z;
-    //        p.r = 255;
-    //        p.g = 255;
-    //        p.b = 255;
-    //
-    //        scene->points.push_back(p);
-    //    }
-    //
-    //
-    //    viewer->removeAllPointClouds();
-    //    viewer->addPointCloud(scene, "cloud_vox");
-
-    //
-    //        typedef pcl::PointNormal XYZNormalType;
-    //    
-    //        // Create a KD-Tree
-    //        pcl::search::KdTree<PointType>::Ptr tree(new pcl::search::KdTree<PointType>);
-    //    
-    //        // Output has the PointNormal type in order to store the normals calculated by MLS
-    //        pcl::PointCloud<XYZNormalType>::Ptr mls_points(new pcl::PointCloud<XYZNormalType>());
-    //        ;
-    //    
-    //        // Init object (second point type is for the normals, even if unused)
-    //        pcl::MovingLeastSquares<PointType, XYZNormalType> mls;
-    //    
-    //        mls.setComputeNormals(true);
-    //    
-    //        // Set parameters
-    //        mls.setInputCloud(cloud_vox);
-    //        mls.setPolynomialFit(true);
-    //        mls.setSearchMethod(tree);
-    //        mls.setSearchRadius(0.05);
-    //        mls.setPolynomialOrder(2);
-    //        //    mls.setUpsamplingMethod(pcl::MovingLeastSquares<PointType,XYZNormalType>::SAMPLE_LOCAL_PLANE);
-    //        //    mls.setUpsamplingRadius(0.005);
-    //        //    mls.setUpsamplingStepSize(0.003);
-    //        // Reconstruct
-    //        mls.process(*mls_points);
-    //
-    //    // Save output
-    //    pcl::io::savePCDFile("bun0-mls.pcd", *mls_points);
-    //
-    //
-    //    viewer->addPointCloud(cloud_vox, "cloud_vox");
-
+   
 
     while (!viewer->wasStopped()) {
         viewer->spinOnce();
     }
 
-    //    pcl::Poisson<XYZNormalType> poisson;
-    //    poisson.setDepth (9);
-    //    poisson.setInputCloud (mls_points);
-    //    pcl::PolygonMesh mesh;
-    //    poisson.reconstruct (mesh);
-    //    pcl::io::saveVTKFile ("/home/daniele/Desktop/sreconstruc.vtk",mesh);
-
-    //    pcl::io::savePLYFileASCII("/home/daniele/Desktop/mls.ply", *mls_points);
-    //    pcl::io::savePLYFileASCII("/home/daniele/Desktop/output.ply", *cloud_vox);
 
     return (0);
 }
