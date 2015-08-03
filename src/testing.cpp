@@ -69,15 +69,16 @@ struct ElevatorMap {
 struct Palette {
     std::vector<Eigen::Vector3i> colors;
     int index = -1;
+
     Palette() {
         colors.push_back(Eigen::Vector3i(115, 255, 0));
         colors.push_back(Eigen::Vector3i(232, 159, 12));
-        colors.push_back(Eigen::Vector3i(255, 0,0));
+        colors.push_back(Eigen::Vector3i(255, 0, 0));
         colors.push_back(Eigen::Vector3i(61, 12, 232));
         colors.push_back(Eigen::Vector3i(13, 255, 239));
     }
-    
-    Eigen::Vector3i getColor(){
+
+    Eigen::Vector3i getColor() {
         index++;
         index = index % colors.size();
         return colors[index];
@@ -95,20 +96,24 @@ pcl::visualization::PCLVisualizer* viewer;
 pcl::PointCloud<PointType>::Ptr full_cloud(new pcl::PointCloud<PointType>());
 typedef pcl::PointNormal XYZNormalType;
 
+
+std::string cloud_base_path = "/home/daniele/Desktop/Ground/";
+
 void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
 
     std::stringstream ss;
-    ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
+    ss << cloud_base_path;
     ss << index << ".pcd";
     if (pcl::io::loadPCDFile<PointType> (ss.str().c_str(), *cloud) == -1) //* load the file
     {
         PCL_ERROR("Couldn't read file test_pcd.pcd \n");
 
     }
-
+    
+    std::cout << "Points Loaded: "<<cloud->points.size()<<std::endl;
     //LOAD MATRIX
     ss.str("");
-    ss << "/home/daniele/Desktop/TSDF_Test/1437572674.743236835/";
+    ss << cloud_base_path;
     ss << index << ".txt";
     ifstream myReadFile;
     std::cout << "Opening: " << ss.str().c_str() << std::endl;
@@ -227,18 +232,28 @@ void processCloud(visy::Voxy* voxy, int index, pcl::PointCloud<PointType>::Ptr& 
     Eigen::Matrix4f t;
     loadCloud(index, cloud, t);
 
-    t = t*adjust;
+    //t = t*adjust;
 
     pcl::transformPointCloud(*cloud, *cloud_trans, t);
     Eigen::Vector3f pov(t(0, 3), t(1, 3), t(2, 3));
+    
+    boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
+    
+    std::cout << "Cloud trans: "<<cloud_trans->points.size()<<std::endl;
     voxy->addPointCloud(cloud_trans, pov);
-
+    
+    boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::time_duration duration(time_end - time_start);
+    
     pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
     voxy->voxelToCloudZeroCrossing(cloud_vox);
-
+    std::cout << "Voxy update time: "<<duration<<std::endl;
+    
     /**FILTER */
-    filterCloudMLS(cloud_vox, cloud_out);
-
+    //filterCloudMLS(cloud_vox, cloud_out);
+    cloud_out = cloud_vox;
+    
+    std::cout << "Vox size: "<<cloud_vox->points.size()<<std::endl;
     /** NORMALS */
     computeNormals(cloud_out, cloud_normals);
 }
@@ -278,11 +293,11 @@ void nextRound() {
             cloud,
             cloud_normals
             );
-    current_index += 5;
+    current_index += 10;
 
     viewer->removeAllPointClouds();
 
-    //    showCloud(cloud,255,0,0,3,"còpid");
+    showCloud(cloud, 255, 255, 255, 1, "cloud");
     //    viewer->addPointCloudNormals<PointType,PointNormalType>(cloud,cloud_normals,100,0.02f,"normals");
 
     elevatorPlanesCheck(
@@ -295,47 +310,54 @@ void nextRound() {
             6500
             );
 
-//    Draw z-slice colore
-            for (int z = 0; z < emap->size; z++) {
-                pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
-                std::vector<int> slice;
-                
-                for (int i = 0; i < cloud->points.size(); i++) {
-                    int index = emap->pointIndex(cloud->points[i].z);
-                    if(index==z){
-                        slice.push_back(i);
-                    }
-                }
-                
-                pcl::copyPointCloud(*cloud,slice,*cluster);
-                showCloud(cluster, rand()*255, rand()*255, rand()*255, 3.0f, buildNameWithNumber("cluster", z));
-        
-            }
+    //    Draw z-slice colore
+    //            for (int z = 0; z < emap->size; z++) {
+    //                pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
+    //                std::vector<int> slice;
+    //                
+    //                for (int i = 0; i < cloud->points.size(); i++) {
+    //                    int index = emap->pointIndex(cloud->points[i].z);
+    //                    if(index==z){
+    //                        slice.push_back(i);
+    //                    }
+    //                }
+    //                
+    //                pcl::copyPointCloud(*cloud,slice,*cluster);
+    //                showCloud(cluster, rand()*255, rand()*255, rand()*255, 3.0f, buildNameWithNumber("cluster", z));
+    //        
+    //            }
 
 
-//    std::vector<pcl::PointIndices> cluster_indices;
-//
-//    pcl::copyPointCloud(*cloud, withoutplanes_indices, *cloud_without_planes);
-//    buildClusters(cloud_without_planes, cluster_indices);
-//
-//    for (int i = 0; i < cluster_indices.size(); i++) {
-//        pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
-//        pcl::copyPointCloud(*cloud_without_planes, cluster_indices[i], *cluster);
-//        Eigen::Vector3i color=  palette.getColor();
-//        showCloud(cluster, color(0), color(1), color(2), 3.0f, buildNameWithNumber("cluster", i));
-//    }
-//
-//    pcl::PointCloud<PointType>::Ptr planes(new pcl::PointCloud<PointType>);
-//    pcl::copyPointCloud(*cloud, planes_indices, *planes);
-//    showCloud(planes, 0, 125, 0, 5.0f, buildNameWithNumber("planes", 0));
-
+    //    std::vector<pcl::PointIndices> cluster_indices;
+    //
+    //    pcl::copyPointCloud(*cloud, withoutplanes_indices, *cloud_without_planes);
+    //    buildClusters(cloud_without_planes, cluster_indices);
+    //
+    //    for (int i = 0; i < cluster_indices.size(); i++) {
+    //        pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>);
+    //        pcl::copyPointCloud(*cloud_without_planes, cluster_indices[i], *cluster);
+    //        Eigen::Vector3i color=  palette.getColor();
+    //        showCloud(cluster, color(0), color(1), color(2), 3.0f, buildNameWithNumber("cluster", i));
+    //    }
+    //
+    //    pcl::PointCloud<PointType>::Ptr planes(new pcl::PointCloud<PointType>);
+    //    pcl::copyPointCloud(*cloud, planes_indices, *planes);
+    //    showCloud(planes, 0, 125, 0, 5.0f, buildNameWithNumber("planes", 0));
+   
+    if (current_index <= 166) {
+            //            addPointCloudToViewer(current_index);
+            nextRound();
+    }else{
+    system("espeak -v it -s 80 \"ho finito\"");
+    }
 }
 
 void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
         void* viewer_void) {
     if (event.getKeySym() == "v" && event.keyDown()) {
+        std::cout << "OK!" << std::endl;
         //addPointCloudToVox(voxy,current_index);
-        if (current_index < 60) {
+        if (current_index <= 166) {
             //            addPointCloudToViewer(current_index);
             nextRound();
         }
@@ -346,10 +368,11 @@ int
 main(int argc, char** argv) {
     /** PARAMETERS */
     parameters = new visy::Parameters(argc, argv);
-
+    parameters->putFloat("sigma");
+    
     adjust <<
-            1, 0, 0, -0.01,
-            0, 1, 0, 0,
+            1, 0, 0, 0,
+            0, 1, 0, -0.01,
             0, 0, 1, 0,
             0, 0, 0, 1;
 
@@ -357,22 +380,42 @@ main(int argc, char** argv) {
     viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
     viewer->registerKeyboardCallback(keyboardEventOccurred, (void*) &viewer);
 
+    system("espeak -v it -s 80 \"ho iniziato\"");
     /* VOXY */
     int size = 256;
     int full_size = size * size*size;
     double step = 2.0f / (double) size;
-    Eigen::Vector3f offset(0.0, 1.0, 1.0);
-    voxy = new visy::Voxy(size, 2.0, 0.01f, offset);
+    double sigma = parameters->getFloat("sigma");
+    std::cout << "SIGMA: "<<sigma<<std::endl;
+    Eigen::Vector3f offset(0.0, 1.0, 1.5);
+    voxy = new visy::Voxy(size, 2.0, sigma, offset);
 
     /** ELEVATOR MAP */
     emap = new ElevatorMap(2.0, 0.02, 1.02);
 
-   
+
 
     while (!viewer->wasStopped()) {
         viewer->spinOnce();
     }
 
+    
+    pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr cloud_out(new pcl::PointCloud<PointType>());
+    voxy->voxelToCloudZeroCrossing(cloud_vox);
+    filterCloudMLS(cloud_vox, cloud_out);
+
+    cloud_vox->width = 1;
+    cloud_vox->height = cloud_vox->points.size();
+
+    cloud_out->width = 1;
+    cloud_out->height = cloud_out->points.size();
+
+    
+    std::stringstream ss;
+    ss << "/home/daniele/Desktop/raw_"<<sigma<<".pcd";
+    pcl::io::savePCDFile(ss.str(), *cloud_vox);
+    pcl::io::savePCDFile("/home/daniele/Desktop/filtered.pcd", *cloud_out);
 
     return (0);
 }

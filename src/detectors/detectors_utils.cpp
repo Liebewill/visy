@@ -96,9 +96,10 @@ namespace visy {
                     visy::descriptors::Descriptor* descriptor = new visy::descriptors::Bold3DDescriptorMultiBunch(
                             nbin, sizes, new visy::descriptors::DFunctionBD(nbin), visy::descriptors::Bold3DDescriptorMultiBunch::BUNCH_METHOD_RADIUS);
                     detector = new visy::detectors::HybridDetector(detector_name, extractor, descriptor);
-                } else if (detector_name == "SIFT") {
+                } 
+                /*else if (detector_name == "SIFT") {
                     detector = new visy::detectors::SiftDetector();
-                }
+                }*/
 
                 return detector;
             }

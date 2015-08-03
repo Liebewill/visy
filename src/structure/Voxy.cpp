@@ -24,7 +24,7 @@ namespace visy {
         this->voxel_data_counter = new int[(int) this->edge_full_size];
         this->voxel_labels = new int[(int) this->edge_full_size];
 
-        std::fill(this->voxel_data, this->voxel_data + (int) this->edge_full_size, 2.0);
+        std::fill(this->voxel_data, this->voxel_data + (int) this->edge_full_size, 0.0);
         std::fill(this->voxel_data_pin, this->voxel_data_pin + (int) this->edge_full_size, false);
         std::fill(this->voxel_data_counter, this->voxel_data_counter + (int) this->edge_full_size, 0);
         std::fill(this->voxel_labels, this->voxel_labels + (int) this->edge_full_size, -1);
@@ -52,7 +52,6 @@ namespace visy {
                     iz < this->edge_size &&
                     iz >= 0
                     ) {
-
                 index = ix + this->edge_size * iy + this->edge_square_size *iz;
                 return true;
             }
@@ -123,10 +122,15 @@ namespace visy {
                 break;
             }
             if (!boundary_left) {
-                if (this->voxel_data_counter[index_left] < this->round_counter) {
+//                if (this->voxel_data_counter[index_left] < this->round_counter) {
                     this->voxel_data_counter[index_left]++;
-                    this->voxel_data[index_left] = d;
-                }
+//                    if(this->voxel_data[index_left] ==0){
+//                       this->voxel_data[index_left] = d; 
+//                    }else{
+//                        this->voxel_data[index_left] = 0.9f*this->voxel_data[index_left]+0.1f*d;
+//                    }
+                    this->voxel_data[index_left] += d;
+//                }
             }
             cursor_left = cursor_left - ray_dir * this->voxel_size;
         }
@@ -134,30 +138,35 @@ namespace visy {
         while (!boundary_right) {
             boundary_right = !pointToIndex(cursor_right, index_right);
             d = truncatedDistance(point, cursor_right);
-            d = d * d*d;
+            //d = d * d*d;
             if (d > 1.0f) {
                 break;
             }
             if (!boundary_right) {
-                if (this->voxel_data_counter[index_right] < this->round_counter) {
+//                if (this->voxel_data_counter[index_right] < this->round_counter) {
                     this->voxel_data_counter[index_right]++;
-                    this->voxel_data[index_right] = -d;
-                }
+//                    if(this->voxel_data[index_right] ==0){
+//                       this->voxel_data[index_right] = -d; 
+//                    }else{
+//                        this->voxel_data[index_right] = 0.9f*this->voxel_data[index_right]-0.1f*d;
+//                    }
+                    this->voxel_data[index_right] += -d;
+//                }
             }
             cursor_right = cursor_right + ray_dir * this->voxel_size;
         }
     }
 
     void Voxy::addPointCloud(pcl::PointCloud<PointType>::Ptr cloud, Eigen::Vector3f& pov) {
-        std::fill(this->voxel_data_pin, this->voxel_data_pin + (int) this->edge_full_size, false);
+        //std::fill(this->voxel_data_pin, this->voxel_data_pin + (int) this->edge_full_size, false);
         this->round_counter++;
         for (int i = 0; i < cloud->points.size(); i++) {
-            if (i % 5 != 0)continue;
+            if (i % 10 != 0)continue; 
             //            int x = i % 640;
             //            int y = i / 640;
             //            if (x > 160 && x < 480 && y > 120 && y < 360) {
 
-            std::cout << "Perc: " << ((double) i / (double) cloud->points.size())*100.0 << std::endl;
+            //std::cout << "Perc: " << ((double) i / (double) cloud->points.size())*100.0 << std::endl;
             Eigen::Vector3f point(
                     cloud->points[i].x,
                     cloud->points[i].y,
@@ -171,7 +180,6 @@ namespace visy {
 
     void Voxy::voxelToCloudZeroCrossing(pcl::PointCloud<PointType>::Ptr& cloud_out) {
         Eigen::Vector3f point;
-
         for (int i = 0; i < this->edge_full_size; i++) {
             if (this->voxel_data_counter[i] <= 0)continue;
 
@@ -204,7 +212,7 @@ namespace visy {
                 }
 
             }
-
+            
             if (!test) {
                 p.r = 255;
                 p.g = 255;
@@ -224,52 +232,6 @@ namespace visy {
             //                            p.b = 0;
             //                            cloud_out->points.push_back(p);
             //                        }
-        }
-    }
-
-    void Voxy::voxelToCloud(pcl::PointCloud<PointType>::Ptr& cloud_out, std::vector<int>& labels) {
-        Eigen::Vector3f point;
-
-        for (int i = 0; i < this->edge_full_size; i++) {
-            if (this->voxel_data_counter[i] <= 0)continue;
-
-            this->pointToIndex(point, i, true);
-            //        
-            PointType p;
-            p.x = point(0);
-            p.y = point(1);
-            p.z = point(2);
-
-
-            int nx = i + 1;
-            int ny = i + this->edge_size;
-            int nz = i + this->edge_square_size;
-
-            bool test = true;
-            if (nx < this->edge_full_size && ny < this->edge_full_size && nz < this->edge_full_size) {
-                if (this->voxel_data_counter[nx] <= 0)continue;
-                if (this->voxel_data_counter[ny] <= 0)continue;
-                if (this->voxel_data_counter[nz] <= 0)continue;
-
-                if ((this->voxel_data[i] >= 0 && this->voxel_data[nx] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[nx] >= 0)) {
-                    test = false;
-                }
-                if ((this->voxel_data[i] >= 0 && this->voxel_data[ny] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[ny] >= 0)) {
-                    test = false;
-                }
-                if ((this->voxel_data[i] >= 0 && this->voxel_data[nz] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[nz] >= 0)) {
-                    test = false;
-                }
-
-            }
-
-            if (!test) {
-                p.r = 255;
-                p.g = 255;
-                p.b = 255;
-                cloud_out->points.push_back(p);
-                labels.push_back(this->voxel_labels[i]);
-            }
         }
     }
 

@@ -124,7 +124,7 @@ add_library(visy_detectors
             src/detectors/BoldDetector.cpp
             src/detectors/Bold3DXDetector.cpp
             src/detectors/HybridDetector.cpp
-            src/detectors/SiftDetector.cpp
+            #src/detectors/SiftDetector.cpp
             src/detectors/detectors_utils.cpp
             )
 target_link_libraries (visy_detectors ${PCL_LIBRARIES})
