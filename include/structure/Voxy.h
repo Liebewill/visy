@@ -38,7 +38,7 @@ namespace visy {
         int addCluster(pcl::PointCloud<PointType>::Ptr cluster);
         int labelsCount();
         
-        void voxelToCloudZeroCrossing(pcl::PointCloud<PointType>::Ptr& cloud_out);
+        void voxelToCloudZeroCrossing(pcl::PointCloud<PointType>::Ptr& cloud_out,bool bicolor=false);
         void voxelToCloud(pcl::PointCloud<PointType>::Ptr& cloud_out,std::vector<int>& labels);
 
         double* voxel_data;

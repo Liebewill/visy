@@ -20,14 +20,12 @@ namespace visy {
         this->offset = offset;
 
         this->voxel_data = new double[(int) this->edge_full_size];
-        this->voxel_data_pin = new bool[(int) this->edge_full_size];
         this->voxel_data_counter = new int[(int) this->edge_full_size];
-        this->voxel_labels = new int[(int) this->edge_full_size];
+        //this->voxel_labels = new int[(int) this->edge_full_size];
 
         std::fill(this->voxel_data, this->voxel_data + (int) this->edge_full_size, 0.0);
-        std::fill(this->voxel_data_pin, this->voxel_data_pin + (int) this->edge_full_size, false);
         std::fill(this->voxel_data_counter, this->voxel_data_counter + (int) this->edge_full_size, 0);
-        std::fill(this->voxel_labels, this->voxel_labels + (int) this->edge_full_size, -1);
+        //std::fill(this->voxel_labels, this->voxel_labels + (int) this->edge_full_size, -1);
     }
     static int LABEL_COUNTER = 0;
 
@@ -102,7 +100,7 @@ namespace visy {
     }
 
     void Voxy::addPoint(Eigen::Vector3f& point, Eigen::Vector3f& pov) {
-        
+
         Eigen::Vector3f ray = point - pov;
         Eigen::Vector3f ray_dir = ray / ray.norm();
 
@@ -122,15 +120,15 @@ namespace visy {
                 break;
             }
             if (!boundary_left) {
-//                if (this->voxel_data_counter[index_left] < this->round_counter) {
-                    this->voxel_data_counter[index_left]++;
-//                    if(this->voxel_data[index_left] ==0){
-//                       this->voxel_data[index_left] = d; 
-//                    }else{
-//                        this->voxel_data[index_left] = 0.9f*this->voxel_data[index_left]+0.1f*d;
-//                    }
-                    this->voxel_data[index_left] += d;
-//                }
+                //                if (this->voxel_data_counter[index_left] < this->round_counter) {
+                this->voxel_data_counter[index_left]++;
+                //                    if(this->voxel_data[index_left] ==0){
+                //                       this->voxel_data[index_left] = d; 
+                //                    }else{
+                //                        this->voxel_data[index_left] = 0.9f*this->voxel_data[index_left]+0.1f*d;
+                //                    }
+                this->voxel_data[index_left] += d;
+                //                }
             }
             cursor_left = cursor_left - ray_dir * this->voxel_size;
         }
@@ -143,15 +141,15 @@ namespace visy {
                 break;
             }
             if (!boundary_right) {
-//                if (this->voxel_data_counter[index_right] < this->round_counter) {
-                    this->voxel_data_counter[index_right]++;
-//                    if(this->voxel_data[index_right] ==0){
-//                       this->voxel_data[index_right] = -d; 
-//                    }else{
-//                        this->voxel_data[index_right] = 0.9f*this->voxel_data[index_right]-0.1f*d;
-//                    }
-                    this->voxel_data[index_right] += -d;
-//                }
+                //                if (this->voxel_data_counter[index_right] < this->round_counter) {
+                this->voxel_data_counter[index_right]++;
+                //                    if(this->voxel_data[index_right] ==0){
+                //                       this->voxel_data[index_right] = -d; 
+                //                    }else{
+                //                        this->voxel_data[index_right] = 0.9f*this->voxel_data[index_right]-0.1f*d;
+                //                    }
+                this->voxel_data[index_right] += -d;
+                //                }
             }
             cursor_right = cursor_right + ray_dir * this->voxel_size;
         }
@@ -161,7 +159,7 @@ namespace visy {
         //std::fill(this->voxel_data_pin, this->voxel_data_pin + (int) this->edge_full_size, false);
         this->round_counter++;
         for (int i = 0; i < cloud->points.size(); i++) {
-            if (i % 10 != 0)continue; 
+            if (i % 10 != 0)continue;
             //            int x = i % 640;
             //            int y = i / 640;
             //            if (x > 160 && x < 480 && y > 120 && y < 360) {
@@ -173,17 +171,17 @@ namespace visy {
                     cloud->points[i].z
                     );
             Eigen::Vector3f ppov;
-            ppov << 
-                    pov(0),pov(1),cloud->points[i].z;
-            this->addPoint(point, ppov);
-            
-            
+            ppov <<
+                    pov(0), pov(1), cloud->points[i].z;
+            this->addPoint(point, pov);
+
+
             //            }
 
         }
     }
 
-    void Voxy::voxelToCloudZeroCrossing(pcl::PointCloud<PointType>::Ptr& cloud_out) {
+    void Voxy::voxelToCloudZeroCrossing(pcl::PointCloud<PointType>::Ptr& cloud_out, bool bicolor) {
         Eigen::Vector3f point;
         for (int i = 0; i < this->edge_full_size; i++) {
             if (this->voxel_data_counter[i] <= 0)continue;
@@ -195,48 +193,77 @@ namespace visy {
             p.y = point(1);
             p.z = point(2);
 
+            if (!bicolor) {
 
-            int n1 = i + 1;
-            int n2 = i + this->edge_size;
-            int n3 = i + this->edge_square_size;
+                int nx = i + 1;
+                int ny = i + this->edge_size;
+                int nz = i + this->edge_square_size;
 
-            bool test = true;
-            if (n1 < this->edge_full_size && n2 < this->edge_full_size && n3 < this->edge_full_size) {
-                if (this->voxel_data_counter[n1] <= 0)continue;
-                if (this->voxel_data_counter[n2] <= 0)continue;
-                if (this->voxel_data_counter[n3] <= 0)continue;
+                bool test = true;
+                if (nx < this->edge_full_size && ny < this->edge_full_size && nz < this->edge_full_size) {
 
-                if ((this->voxel_data[i] >= 0 && this->voxel_data[n1] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[n1] >= 0)) {
-                    test = false;
+                    if (
+                            this->voxel_data_counter[nx] <= 0 &&
+                            this->voxel_data_counter[ny] <= 0 &&
+                            this->voxel_data_counter[nz] <= 0 
+                            )continue;
+
+
+                    p.r = 255;
+                    p.g = 255;
+                    p.b = 255;
+
+                    if (this->voxel_data_counter[nx] > 0)
+                        if ((this->voxel_data[i] >= 0 && this->voxel_data[nx] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[nx] >= 0)) {
+                            test = false;
+                            float mag = abs(this->voxel_data[i] - this->voxel_data[nx]);
+                            float delta = mag > 0 ? abs(this->voxel_data[i] / mag) * voxel_size : 0;
+                            p.x = p.x + voxel_size / 2.0f;
+                        }
+
+                    if (this->voxel_data_counter[ny] > 0)
+                        if ((this->voxel_data[i] >= 0 && this->voxel_data[ny] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[ny] >= 0)) {
+                            test = false;
+                            float mag = abs(this->voxel_data[i] - this->voxel_data[ny]);
+                            float delta = mag > 0 ? abs(this->voxel_data[i] / mag) * voxel_size : 0;
+                            p.y = p.y + voxel_size / 2.0f;
+                        }
+
+                    if (this->voxel_data_counter[nz] > 0)
+                        if ((this->voxel_data[i] >= 0 && this->voxel_data[nz] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[nz] >= 0)) {
+                            test = false;
+                            float mag = abs(this->voxel_data[i] - this->voxel_data[nz]);
+                            float delta = mag > 0 ? abs(this->voxel_data[i] / mag) * voxel_size : 0;
+                            p.z = p.z + voxel_size / 2.0f;
+                        }
+
+                    if (!test) {
+                        cloud_out->points.push_back(p);
+                    }
+
                 }
-                if ((this->voxel_data[i] >= 0 && this->voxel_data[n2] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[n2] >= 0)) {
-                    test = false;
-                }
-                if ((this->voxel_data[i] >= 0 && this->voxel_data[n3] < 0) || (this->voxel_data[i] < 0 && this->voxel_data[n3] >= 0)) {
-                    test = false;
-                }
 
+                if (!test) {
+                    p.r = 255;
+                    p.g = 255;
+                    p.b = 255;
+                    cloud_out->points.push_back(p);
+                }
+            } else {
+
+                if (abs(this->voxel_data[i]) <= 1.0)
+                    if (this->voxel_data[i] >= 0) {
+                        p.r = 255.0; // - this->voxel_data[i]*255.0);
+                        p.g = 0;
+                        p.b = 0;
+                        cloud_out->points.push_back(p);
+                    } else {
+                        p.r = 0;
+                        p.g = 255.0; // + this->voxel_data[i]*255.0);
+                        p.b = 0;
+                        cloud_out->points.push_back(p);
+                    }
             }
-            
-            if (!test) {
-                p.r = 255;
-                p.g = 255;
-                p.b = 255;
-                cloud_out->points.push_back(p);
-            }
-
-            //                    if (abs(this->voxel_data[i]) <= 1.0)
-            //                        if (this->voxel_data[i] >= 0) {
-            //                            p.r = (255.0 - this->voxel_data[i]*255.0);
-            //                            p.g = 0;
-            //                            p.b = 0;
-            //                            cloud_out->points.push_back(p);
-            //                        } else {
-            //                            p.r = 0;
-            //                            p.g = (255.0 + this->voxel_data[i]*255.0);
-            //                            p.b = 0;
-            //                            cloud_out->points.push_back(p);
-            //                        }
         }
     }
 
@@ -256,7 +283,7 @@ namespace visy {
         }
 
         double perc = (double) perc_counter / (double) cluster->points.size();
-        if (found_label == -1 ) {
+        if (found_label == -1) {
             found_label = VoxyLabel::LABEL_COUNTER++;
         }
 
@@ -267,8 +294,8 @@ namespace visy {
             }
         }
     }
-    
-    int Voxy::labelsCount(){
+
+    int Voxy::labelsCount() {
         return VoxyLabel::LABEL_COUNTER;
     }
 }
