@@ -102,7 +102,7 @@ namespace visy {
     }
 
     void Voxy::addPoint(Eigen::Vector3f& point, Eigen::Vector3f& pov) {
-
+        
         Eigen::Vector3f ray = point - pov;
         Eigen::Vector3f ray_dir = ray / ray.norm();
 
@@ -138,7 +138,7 @@ namespace visy {
         while (!boundary_right) {
             boundary_right = !pointToIndex(cursor_right, index_right);
             d = truncatedDistance(point, cursor_right);
-            //d = d * d*d;
+            d = d * d*d;
             if (d > 1.0f) {
                 break;
             }
@@ -172,7 +172,12 @@ namespace visy {
                     cloud->points[i].y,
                     cloud->points[i].z
                     );
-            this->addPoint(point, pov);
+            Eigen::Vector3f ppov;
+            ppov << 
+                    pov(0),pov(1),cloud->points[i].z;
+            this->addPoint(point, ppov);
+            
+            
             //            }
 
         }

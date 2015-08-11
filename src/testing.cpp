@@ -97,7 +97,7 @@ pcl::PointCloud<PointType>::Ptr full_cloud(new pcl::PointCloud<PointType>());
 typedef pcl::PointNormal XYZNormalType;
 
 
-std::string cloud_base_path = "/home/daniele/Desktop/Ground/";
+std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/Ground/";
 
 void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
 
@@ -344,12 +344,12 @@ void nextRound() {
     //    pcl::copyPointCloud(*cloud, planes_indices, *planes);
     //    showCloud(planes, 0, 125, 0, 5.0f, buildNameWithNumber("planes", 0));
    
-    if (current_index <= 166) {
+   /* if (current_index <= 166) {
             //            addPointCloudToViewer(current_index);
             nextRound();
     }else{
     system("espeak -v it -s 80 \"ho finito\"");
-    }
+    }*/
 }
 
 void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
