@@ -302,7 +302,7 @@ void nextRound() {
 
       pcl::PointCloud<PointType>::Ptr cloud_colors(new pcl::PointCloud<PointType>());
      voxy->voxelToCloudZeroCrossing(cloud_colors,true);
-     viewer->addPointCloud(cloud_colors, "cloud_colors");
+    // viewer->addPointCloud(cloud_colors, "cloud_colors");
 
     elevatorPlanesCheck(
             cloud,
@@ -374,11 +374,7 @@ main(int argc, char** argv) {
     parameters = new visy::Parameters(argc, argv);
     parameters->putFloat("sigma");
 
-    adjust <<
-            1, 0, 0, 0,
-            0, 1, 0, -0.01,
-            0, 0, 1, 0,
-            0, 0, 0, 1;
+    
 
     /* VIEWER */
     viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
@@ -396,11 +392,34 @@ main(int argc, char** argv) {
     Eigen::Vector3f offset(0.0, 1.0, 1.5);
     voxy = new visy::Voxy(size, 2.0, sigma, offset);
 
+    adjust <<
+            1, 0, 0, 0,
+            0, 1, 0, sigma,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
+    
     /** ELEVATOR MAP */
     emap = new ElevatorMap(2.0, 0.02, 1.02);
 
     boost::posix_time::ptime time_start, time_end;
     boost::posix_time::time_duration duration;
+    
+    std::vector<int> ics;
+    ics.push_back(50);
+    ics.push_back(160);
+    for(int i = 0; i < ics.size(); i++){
+    pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
+        Eigen::Matrix4f t;
+        
+        loadCloud(ics[i],cloud,t);
+        t = t*adjust;
+        pcl::transformPointCloud(*cloud, *cloud_trans, t);
+        std::stringstream ss;
+        ss<<"c_"<<i;
+        viewer->addPointCloud(cloud_trans,ss.str());
+    }
+    
 /*
     for (int index = 0; index <= 166; index += 10) {
         pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());

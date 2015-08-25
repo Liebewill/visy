@@ -116,6 +116,7 @@ namespace visy {
         while (!boundary_left) {
             boundary_left = !pointToIndex(cursor_left, index_left);
             d = truncatedDistance(point, cursor_left);
+            
             if (d > 1.0f) {
                 break;
             }
@@ -136,7 +137,7 @@ namespace visy {
         while (!boundary_right) {
             boundary_right = !pointToIndex(cursor_right, index_right);
             d = truncatedDistance(point, cursor_right);
-            d = d * d*d;
+            //d = d*2;
             if (d > 1.0f) {
                 break;
             }
