@@ -166,14 +166,14 @@ namespace visy {
         this->round_counter++;
         int center_x = 640 / 2;
         int center_y = 480 / 2;
-        int size = 400;
+        int size = 1000;
         int min_x = center_x - size / 2;
         int max_x = center_x + size / 2;
         int min_y = center_y - size / 2;
         int max_y = center_y + size / 2;
 
         for (int i = 0; i < cloud->points.size(); i++) {
-            if (i % 2 != 0)continue;
+            if (i % 5 != 0)continue;
             int x = i % 640;
             int y = i / 640;
             if (

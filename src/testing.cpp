@@ -98,9 +98,9 @@ struct ElevatorMap {
 
             if (this->pointValue(p.z) >= map_min_inliers) {
                 planes_indices.push_back(i);
-            } else if (this->pointValue(p.z - step) >= map_min_inliers) {
+            } else if (this->pointValue(p.z - step / 2.0f) >= map_min_inliers) {
                 planes_indices.push_back(i);
-            } else if (this->pointValue(p.z + step) >= map_min_inliers) {
+            } else if (this->pointValue(p.z + step / 2.0f) >= map_min_inliers) {
                 planes_indices.push_back(i);
             } else {
                 filtered_indices.push_back(i);
@@ -142,7 +142,7 @@ pcl::PointCloud<PointType>::Ptr full_cloud(new pcl::PointCloud<PointType>());
 typedef pcl::PointNormal XYZNormalType;
 
 
-std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/Cups_Refined/";
+std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/House_Refined/";
 
 void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
 
@@ -318,7 +318,7 @@ void buildClusters(
 
     pcl::EuclideanClusterExtraction<PointType> ec;
     ec.setClusterTolerance(0.04); // 2cm
-    ec.setMinClusterSize(5);
+    ec.setMinClusterSize(100);
     ec.setMaxClusterSize(250000);
     ec.setSearchMethod(tree2);
     ec.setInputCloud(cloud);
@@ -382,6 +382,39 @@ void reduceCloud(pcl::PointCloud<PointType>::Ptr& cloud, pcl::PointCloud<PointTy
     sor.filter(*cloud_filtered);
 }
 
+void buildPlane(pcl::PointCloud<PointType>::Ptr& cloud_planes, pcl::PointCloud<PointType>::Ptr& cloud_flat) {
+
+    float max_x = -2.0f;
+    float min_x = 2.0f;
+    float max_y = -2.0f;
+    float min_y = 2.0f;
+    float max_z = -2.0f;
+    float min_z = 2.0f;
+    for (int i = 0; i < cloud_planes->points.size(); i++) {
+        PointType p = cloud_planes->points[i];
+
+        max_x = p.x > max_x ? p.x : max_x;
+        max_y = p.y > max_y ? p.y : max_y;
+        max_z = p.z > max_z ? p.z : max_z;
+        min_x = p.x < min_x ? p.x : min_x;
+        min_y = p.y < min_y ? p.y : min_y;
+        min_z = p.z < min_z ? p.z : min_z;
+
+    }
+
+    float z = (max_z + min_z) / 2.0f;
+    float step = 0.01f;
+    for (float x = min_x; x <= max_x; x += step) {
+        for (float y = min_y; y <= max_y; y += step) {
+            PointType p;
+            p.x = x;
+            p.y = y;
+            p.z = z;
+            cloud_flat->points.push_back(p);
+        }
+    }
+}
+
 void nextRound() {
     pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr cloud_planes(new pcl::PointCloud<PointType>());
@@ -396,33 +429,80 @@ void nextRound() {
             cloud,
             cloud_normals
             );
-    current_index += 5;
+    current_index += parameters->getFloat("step");
 
     //FILTERING
     pcl::PointCloud<PointType>::Ptr cloud_reduced(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr cloud_filtered(new pcl::PointCloud<PointType>());
     reduceCloud(cloud, cloud_reduced, 0.005);
     filterCloudMLS(cloud_reduced, cloud_filtered, 0.02);
+    computeNormals(cloud_filtered, cloud_normals);
 
-    
+
+    //CLUSTERING
     emap->planesCheck(
-            cloud,
+            cloud_filtered,
             cloud_normals,
             withoutplanes_indices,
             planes_indices,
             8.0f,
-            6500);
-    pcl::copyPointCloud(*cloud, planes_indices, *cloud_planes);
-    
-    
-    //VIEW
-    viewer->removeAllPointClouds();
-    showCloud(cloud, 255, 255, 255, 1, "cloud");
-    showCloud(cloud_planes, 255, 0, 0, 1, "planes");
+            6000);
+    pcl::copyPointCloud(*cloud_filtered, planes_indices, *cloud_planes);
+    pcl::copyPointCloud(*cloud_filtered, withoutplanes_indices, *cloud_without_planes);
 
-    pcl::PolygonMesh triangles;
-    buildMesh(cloud_filtered, triangles);
-    viewer->addPolygonMesh(triangles, "mesh");
+
+
+
+    std::vector<pcl::PointIndices> cluster_indices;
+    buildClusters(cloud_without_planes, cluster_indices);
+
+
+    //VIEW
+
+    viewer->removeAllPointClouds();
+
+    //    showCloud(cloud_filtered, 255, 255, 255, 1, "cloud");
+    if (cloud_planes->points.size() > 0) {
+        pcl::PointCloud<PointType>::Ptr flat_planes(new pcl::PointCloud<PointType>());
+        //        buildPlane(cloud_planes, flat_planes);
+        pcl::PolygonMesh plane_triangles;
+        buildMesh(cloud_planes, plane_triangles);
+        viewer->addPolygonMesh(plane_triangles, "planes");
+        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.5f, 0.5f, 0.5f, "planes");
+    }
+    //    showCloud(flat_planes, 125, 125, 125, 1, "planes");
+
+    Palette palette;
+    for (int i = 0; i < cluster_indices.size(); i++) {
+        pcl::PointIndices points = cluster_indices[i];
+        pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>());
+        pcl::copyPointCloud(*cloud_without_planes, points.indices, *cluster);
+
+        Eigen::Vector3i color;
+
+        if (cloud_planes->points.size() > 0) {
+            color = palette.getColor();
+        } else {
+            color << 125, 125, 125;
+        }
+
+        std::stringstream ss;
+        ss << "cluister_" << i;
+        //        showCloud(cluster, color(0), color(1), color(2), 1, ss.str().c_str());
+        pcl::PolygonMesh triangles;
+
+        buildMesh(cluster, triangles);
+        viewer->addPolygonMesh(triangles, ss.str().c_str());
+        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color(0) / 255.0, color(1) / 255.0, color(2) / 255.0, ss.str().c_str());
+
+    }
+
+    //    pcl::PolygonMesh triangles;
+    //    
+    //    buildMesh(cloud_without_planes, triangles);
+    //    viewer->addPolygonMesh(triangles, "mesh");
+    //    viewer->setPointCloudRenderingProperties ( pcl::visualization::PCL_VISUALIZER_COLOR, 0.5, 0.5, 0, "mesh" );
+    //    
 }
 
 void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
@@ -442,7 +522,7 @@ main(int argc, char** argv) {
     /** PARAMETERS */
     parameters = new visy::Parameters(argc, argv);
     parameters->putFloat("sigma");
-
+    parameters->putFloat("step");
 
     /* VIEWER */
     viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
@@ -466,7 +546,7 @@ main(int argc, char** argv) {
             0, 0, 0, 1;
 
     /** ELEVATOR MAP */
-    emap = new ElevatorMap(2.0, 0.01, 1.02);
+    emap = new ElevatorMap(2.0, 0.005, 1.0);
 
     boost::posix_time::ptime time_start, time_end;
     boost::posix_time::time_duration duration;
