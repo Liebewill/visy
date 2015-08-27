@@ -181,6 +181,21 @@ target_link_libraries(
     visy_dataset
 )
 
+#VISY TESTING 2
+add_executable(testing2 src/testing2.cpp)
+target_link_libraries(
+    testing2
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_structure
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
+
 #KEYPOINT TESTER
 add_executable(keypoint_tester src/keypoint_tester.cpp)
 target_link_libraries(
@@ -296,4 +311,22 @@ target_link_libraries(
     visy_detectors
     visy_dataset
     visy_pipes
+)
+
+
+############################### APPS ###########################à
+
+#MLS FILTERING
+add_executable(mls_filter src/apps/mls_filter.cpp)
+target_link_libraries(
+    mls_filter
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_structure
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
 )

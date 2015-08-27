@@ -100,7 +100,12 @@ namespace visy {
     }
 
     void Voxy::addPoint(Eigen::Vector3f& point, Eigen::Vector3f& pov) {
-
+        
+        int index_check;
+        if(!pointToIndex(point, index_check)){
+            return;
+        }
+        
         Eigen::Vector3f ray = point - pov;
         Eigen::Vector3f ray_dir = ray / ray.norm();
 
@@ -116,7 +121,7 @@ namespace visy {
         while (!boundary_left) {
             boundary_left = !pointToIndex(cursor_left, index_left);
             d = truncatedDistance(point, cursor_left);
-            
+
             if (d > 1.0f) {
                 break;
             }
@@ -159,11 +164,25 @@ namespace visy {
     void Voxy::addPointCloud(pcl::PointCloud<PointType>::Ptr cloud, Eigen::Vector3f& pov) {
         //std::fill(this->voxel_data_pin, this->voxel_data_pin + (int) this->edge_full_size, false);
         this->round_counter++;
+        int center_x = 640 / 2;
+        int center_y = 480 / 2;
+        int size = 400;
+        int min_x = center_x - size / 2;
+        int max_x = center_x + size / 2;
+        int min_y = center_y - size / 2;
+        int max_y = center_y + size / 2;
+
         for (int i = 0; i < cloud->points.size(); i++) {
-            if (i % 10 != 0)continue;
-            //            int x = i % 640;
-            //            int y = i / 640;
-            //            if (x > 160 && x < 480 && y > 120 && y < 360) {
+            if (i % 2 != 0)continue;
+            int x = i % 640;
+            int y = i / 640;
+            if (
+                    x <= min_x ||
+                    x >= max_x ||
+                    y <= min_y ||
+                    y >= max_y)
+                continue;
+            
 
             //std::cout << "Perc: " << ((double) i / (double) cloud->points.size())*100.0 << std::endl;
             Eigen::Vector3f point(
@@ -171,9 +190,9 @@ namespace visy {
                     cloud->points[i].y,
                     cloud->points[i].z
                     );
-            Eigen::Vector3f ppov;
-            ppov <<
-                    pov(0), pov(1), cloud->points[i].z;
+//            Eigen::Vector3f ppov;
+//            ppov <<
+//                    pov(0), pov(1), cloud->points[i].z;
             this->addPoint(point, pov);
 
 
@@ -206,7 +225,7 @@ namespace visy {
                     if (
                             this->voxel_data_counter[nx] <= 0 &&
                             this->voxel_data_counter[ny] <= 0 &&
-                            this->voxel_data_counter[nz] <= 0 
+                            this->voxel_data_counter[nz] <= 0
                             )continue;
 
 
