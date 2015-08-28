@@ -142,7 +142,7 @@ pcl::PointCloud<PointType>::Ptr full_cloud(new pcl::PointCloud<PointType>());
 typedef pcl::PointNormal XYZNormalType;
 
 
-std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/House_Refined/";
+std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/Cups_Refined/";
 
 void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
 
@@ -415,6 +415,8 @@ void buildPlane(pcl::PointCloud<PointType>::Ptr& cloud_planes, pcl::PointCloud<P
     }
 }
 
+std::vector<pcl::PointCloud<PointType>::Ptr> current_clusters;
+
 void nextRound() {
     pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr cloud_planes(new pcl::PointCloud<PointType>());
@@ -473,11 +475,12 @@ void nextRound() {
     //    showCloud(flat_planes, 125, 125, 125, 1, "planes");
 
     Palette palette;
+    current_clusters.clear();
     for (int i = 0; i < cluster_indices.size(); i++) {
         pcl::PointIndices points = cluster_indices[i];
         pcl::PointCloud<PointType>::Ptr cluster(new pcl::PointCloud<PointType>());
         pcl::copyPointCloud(*cloud_without_planes, points.indices, *cluster);
-
+        current_clusters.push_back(cluster);
         Eigen::Vector3i color;
 
         if (cloud_planes->points.size() > 0) {
@@ -510,10 +513,10 @@ void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
     if (event.getKeySym() == "v" && event.keyDown()) {
         std::cout << "OK!" << std::endl;
         //addPointCloudToVox(voxy,current_index);
-        if (current_index < 60) {
+//        if (current_index < 60) {
             //            addPointCloudToViewer(current_index);
             nextRound();
-        }
+//        }
     }
 }
 
@@ -523,6 +526,9 @@ main(int argc, char** argv) {
     parameters = new visy::Parameters(argc, argv);
     parameters->putFloat("sigma");
     parameters->putFloat("step");
+    parameters->putFloat("offx", -0.3f);
+    parameters->putFloat("offy", 0.5f);
+    parameters->putFloat("offz", 1.0f);
 
     /* VIEWER */
     viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
@@ -536,7 +542,12 @@ main(int argc, char** argv) {
     double step = 0.5f / (double) size;
     double sigma = parameters->getFloat("sigma");
     std::cout << "SIGMA: " << sigma << std::endl;
-    Eigen::Vector3f offset(-0.3, 0.5, 1.0);
+    Eigen::Vector3f offset(
+            parameters->getFloat("offx"),
+            parameters->getFloat("offy"),
+            parameters->getFloat("offz")
+            );
+
     voxy = new visy::Voxy(size, 1.0, sigma, offset);
 
     adjust <<
@@ -626,6 +637,12 @@ main(int argc, char** argv) {
     ss << "/home/daniele/Desktop/raw_" << sigma << ".pcd";
     pcl::io::savePCDFile(ss.str(), *cloud_vox);
     pcl::io::savePCDFile("/home/daniele/Desktop/filtered.pcd", *cloud_out);
-
+    
+    for(unsigned int i = 0; i < current_clusters.size(); i++){
+        ss.str("");
+        ss << "/home/daniele/Desktop/raw_cluster_"<<i<<".pcd";
+        pcl::io::savePCDFile(ss.str(), *(current_clusters[i]));
+    }
+    
     return (0);
 }

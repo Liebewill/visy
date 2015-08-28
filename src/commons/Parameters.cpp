@@ -24,7 +24,7 @@ namespace visy {
         std::stringstream ss;
         ss << "--" << name;
         T value;
-//        pcl::console::parse_argument(argc, argv, ss.str().c_str(), T);
+        //        pcl::console::parse_argument(argc, argv, ss.str().c_str(), T);
         //this->strings.insert(std::pair<std::string, std::string>(name, value));
     }
 
@@ -46,11 +46,13 @@ namespace visy {
     }
 
     void
-    Parameters::putFloat(std::string name) {
+    Parameters::putFloat(std::string name, float default_value ) {
         std::stringstream ss;
         ss << "--" << name;
         float value;
-        pcl::console::parse_argument(argc, argv, ss.str().c_str(), value);
+        if (pcl::console::parse_argument(argc, argv, ss.str().c_str(), value) == -1) {
+            value = default_value;
+        }
         this->floats.insert(std::pair<std::string, float>(name, value));
     }
 

@@ -17,7 +17,7 @@ namespace visy {
         virtual ~Parameters();
         template<typename T> void readValue(std::string name);
         void putString(std::string name);
-        void putFloat(std::string name);
+        void putFloat(std::string name,float default_value = 0.0f);
         void putInt(std::string name);
         void putBool(std::string name);
         std::string getString(std::string name);

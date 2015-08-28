@@ -166,7 +166,7 @@ namespace visy {
         this->round_counter++;
         int center_x = 640 / 2;
         int center_y = 480 / 2;
-        int size = 1000;
+        int size = 500;
         int min_x = center_x - size / 2;
         int max_x = center_x + size / 2;
         int min_y = center_y - size / 2;

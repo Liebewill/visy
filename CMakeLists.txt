@@ -330,3 +330,18 @@ target_link_libraries(
     visy_detectors
     visy_dataset
 )
+
+#SLICER + GRASPING POINTS
+add_executable(glicer src/apps/glicer.cpp)
+target_link_libraries(
+    glicer
+    ${PCL_LIBRARIES} 
+    ${BOLD_LIBRARIES} 
+    ${OpenCV_LIBS} 
+    visy_commons 
+    visy_structure
+    visy_extractors
+    visy_descriptors
+    visy_detectors
+    visy_dataset
+)
