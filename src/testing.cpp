@@ -43,6 +43,10 @@ struct ElevatorMap {
         std::fill(this->map, this->map + (int) this->size, 0.0);
     }
 
+    void clear() {
+        std::fill(this->map, this->map + (int) this->size, 0.0);
+    }
+
     void pinPoint(double z) {
         int iz = floor(z / step);
         iz += floor(this->offset / step);
@@ -433,7 +437,7 @@ void filterCloudMLS(pcl::PointCloud<PointType>::Ptr& cloud_in, pcl::PointCloud<P
     }
 }
 
-void processCloud(visy::Voxy* voxy, int index, pcl::PointCloud<PointType>::Ptr& cloud_out, pcl::PointCloud<PointNormalType>::Ptr& cloud_normals) {
+void processCloud(visy::Voxy* voxy, int index, pcl::PointCloud<PointType>::Ptr& cloud_out, pcl::PointCloud<PointNormalType>::Ptr& cloud_normals, bool display = true) {
 
     pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
@@ -453,9 +457,11 @@ void processCloud(visy::Voxy* voxy, int index, pcl::PointCloud<PointType>::Ptr& 
     boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
     boost::posix_time::time_duration duration(time_end - time_start);
 
+    std::cout << "Voxy update time: " << duration << std::endl;
+
+    if (!display)return;
     pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
     voxy->voxelToCloudZeroCrossing(cloud_vox);
-    std::cout << "Voxy update time: " << duration << std::endl;
 
     /**FILTER */
     //filterCloudMLS(cloud_vox, cloud_out);
@@ -478,14 +484,19 @@ void buildClusters(
     pcl::search::KdTree<PointType>::Ptr tree2(new pcl::search::KdTree<PointType>);
     tree2->setInputCloud(cloud);
 
-
+    boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
+    
     pcl::EuclideanClusterExtraction<PointType> ec;
-    ec.setClusterTolerance(0.04); // 2cm
-    ec.setMinClusterSize(100);
+    ec.setClusterTolerance(0.01); // 1cm
+    ec.setMinClusterSize(parameters->getFloat("cluster_min"));
     ec.setMaxClusterSize(250000);
     ec.setSearchMethod(tree2);
     ec.setInputCloud(cloud);
     ec.extract(cluster_indices);
+    
+    boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::time_duration duration(time_end - time_start);
+    std::cout << "Segmentation time: "<<duration<<std::endl;
 }
 
 void buildMesh(pcl::PointCloud<PointType>::Ptr& cloud, pcl::PolygonMesh& triangles) {
@@ -584,7 +595,7 @@ void buildPlane(pcl::PointCloud<PointType>::Ptr& cloud_planes, pcl::PointCloud<P
 
 std::vector<pcl::PointCloud<PointType>::Ptr> current_clusters;
 
-void nextRound() {
+void nextRound(bool display = true) {
     pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr cloud_planes(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr cloud_without_planes(new pcl::PointCloud<PointType>());
@@ -592,13 +603,18 @@ void nextRound() {
     std::vector<int> withoutplanes_indices;
     std::vector<int> planes_indices;
 
+    if (current_index == 50)current_index = 60;
     processCloud(
             voxy,
             current_index,
             cloud,
-            cloud_normals
+            cloud_normals,
+            display
             );
     current_index += parameters->getFloat("step");
+
+
+    if (!display)return;
 
     //FILTERING
     pcl::PointCloud<PointType>::Ptr cloud_reduced(new pcl::PointCloud<PointType>());
@@ -610,18 +626,27 @@ void nextRound() {
     occupancy_cloud = cloud_filtered;
 
     //CLUSTERING
+    emap->clear();
+
+    boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
+
     emap->planesCheck(
             cloud_filtered,
             cloud_normals,
             withoutplanes_indices,
             planes_indices,
             8.0f,
-            6000);
+            parameters->getFloat("planes_inliers"));
+
+    boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::time_duration duration(time_end - time_start);
+    std::cout << "Planes time: " << duration << std::endl;
+
     pcl::copyPointCloud(*cloud_filtered, planes_indices, *cloud_planes);
     pcl::copyPointCloud(*cloud_filtered, withoutplanes_indices, *cloud_without_planes);
 
     reduceCloud(cloud_planes, cloud_planes, 0.005f);
-    filterCloudMLS(cloud_planes, cloud_planes, 0.02f);
+    filterCloudMLS(cloud_planes, cloud_planes, 0.05f);
 
     std::vector<pcl::PointIndices> cluster_indices;
     buildClusters(cloud_without_planes, cluster_indices);
@@ -677,20 +702,31 @@ void nextRound() {
 }
 
 bool show_gripper = false;
+bool auto_round = false;
 
 void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
         void* viewer_void) {
+
     if (event.getKeySym() == "v" && event.keyDown()) {
-        std::cout << "OK!" << std::endl;
-        //addPointCloudToVox(voxy,current_index);
-        //        if (current_index < 60) {
-        //            addPointCloudToViewer(current_index);
-        nextRound();
-        //        }
+
+        if (auto_round) {
+            for (int i = 0; i <= parameters->getFloat("max_views") - parameters->getFloat("step"); i += parameters->getFloat("step")) {
+                nextRound();
+                viewer->spinOnce();
+            }
+            //            nextRound();
+        } else {
+            std::cout << "OK!" << std::endl;
+            nextRound();
+
+        }
     }
 
     if (event.getKeySym() == "l" && event.keyDown()) {
         show_gripper = true;
+    }
+    if (event.getKeySym() == "a" && event.keyDown()) {
+        auto_round = true;
     }
     if (event.getKeySym() == "k" && event.keyDown()) {
         for (int i = 0; i < current_clusters.size(); i++) {
@@ -700,8 +736,16 @@ void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
             std::vector<Grasp> grasps;
             pcl::PointCloud<PointType>::Ptr center_slice(new pcl::PointCloud<PointType>());
             pcl::copyPointCloud(*current_clusters[i], slice_indices[slice_indices.size() / 2].indices, *center_slice);
+
+            boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
+
             sliceGraspPoints(center_slice, grasps);
 
+            boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
+            boost::posix_time::time_duration duration(time_end - time_start);
+            
+            std::cout << "Grasp time: "<<duration<<std::endl;
+            
             int index = -1;
             float max_mag = 2222220.0f;
             for (int i = 0; i < grasps.size(); i++) {
@@ -723,11 +767,11 @@ void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
             ss.str("");
             ss << "grasp_" << index << "_p1";
 
-            viewer->addSphere(p1, 0.01f, 0, 0.8f, 0.8f, ss.str().c_str());
+            viewer->addSphere(p1, 0.02f, 0, 0.8f, 0.8f, ss.str().c_str());
 
             ss.str("");
             ss << "grasp_" << index << "_p2";
-            viewer->addSphere(p2, 0.01f, 0, 0.8f, 0.8f, ss.str().c_str());
+            viewer->addSphere(p2, 0.02f, 0, 0.8f, 0.8f, ss.str().c_str());
 
             ss.str("");
             ss << "grasp_" << index << "_l1";
@@ -743,7 +787,7 @@ void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
 
                 ss.str("");
                 ss << "grasp_" << index << "_pw";
-                viewer->addSphere(pw, 0.03f, 0.8f, 0.8f, 0.2f, ss.str().c_str());
+                viewer->addSphere(pw, 0.035f, 0.8f, 0.8f, 0.2f, ss.str().c_str());
             }
             //            pcl::PointCloud<PointType>::Ptr grasp_cloud(new pcl::PointCloud<PointType>());
             //            grasp_cloud->points.push_back(p1);
@@ -757,6 +801,7 @@ int
 main(int argc, char** argv) {
     /** PARAMETERS */
     parameters = new visy::Parameters(argc, argv);
+    parameters->putFloat("max_views", 49);
     parameters->putFloat("sigma");
     parameters->putFloat("step");
     parameters->putFloat("offx", -0.3f);
@@ -772,6 +817,8 @@ main(int argc, char** argv) {
     parameters->putFloat("lvl_max", 2.0f);
     parameters->putFloat("lvl_step", 0.005f);
     parameters->putFloat("lvl_offset", 1.0f);
+    parameters->putFloat("planes_inliers", 5000);
+    parameters->putFloat("cluster_min", 100);
 
     /* VIEWER */
     viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
@@ -850,6 +897,11 @@ main(int argc, char** argv) {
     //    voxy->voxelToCloudZeroCrossing(cloud_isosurface);
     //
     //    showCloud(cloud_isosurface, 255, 255, 255, 1, "isosurface");
+
+    //    for (int i = 0; i <= parameters->getFloat("max_views") - parameters->getFloat("step"); i += parameters->getFloat("step")) {
+    //        nextRound(false);
+    //    }
+    //    nextRound();
 
 
     while (!viewer->wasStopped()) {

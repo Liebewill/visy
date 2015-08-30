@@ -21,6 +21,7 @@
 
 #include "Parameters.h"
 #include "Voxy.h"
+#include "tools.h"
 
 typedef pcl::PointNormal PointNormalType;
 
@@ -129,7 +130,7 @@ void showCloud(pcl::PointCloud<PointType>::Ptr cloud, double r, double g, double
     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, size, name.c_str());
 }
 
-std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/Cups_Refined/";
+std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/House_Refined/";
 
 void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
 
@@ -212,44 +213,34 @@ main(int argc, char** argv) {
     parameters = new visy::Parameters(argc, argv);
     parameters->putInt("s1");
     parameters->putInt("s2");
-    parameters->putFloat("sd",0);
-    parameters->putFloat("sr",0);
+    parameters->putFloat("max",60);
 
     
     
     /* VIEWER */
-    viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
+//    viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
     //    viewer->registerKeyboardCallback(keyboardEventOccurred, (void*) &viewer);
 
     /** ELEVATOR MAP */
     emap = new ElevatorMap(2.0, 0.01, 1.5);
 
     pcl::PointCloud<PointType>::Ptr cloud1(new pcl::PointCloud<PointType>());
-    pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
+    
 
     Eigen::Matrix4f t1;
     Eigen::Matrix4f t2;
 
-    loadCloud(parameters->getInt("s1"), cloud1, t1);
-    
-    
-    float sd = parameters->getFloat("sd");
-    float sr = parameters->getFloat("sr");
-
-    
-        pcl::FastBilateralFilter<PointType> bif;
-        bif.setSigmaS(sd);
-        bif.setSigmaR(sr);
-        bif.setInputCloud(cloud1);
-        bif.applyFilter(*cloud);
-    
-    
-    viewer->addPointCloud(cloud,"c1");
-    
-
-    while (!viewer->wasStopped()) {
-        viewer->spinOnce();
+    for(int i = 0; i <= parameters->getFloat("max");i++){
+        pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
+        loadCloud(i, cloud, t1);
+        cv::Mat img;
+        visy::tools::rgbFromCloud(cloud,img);
+        
+        std::stringstream ss;
+        ss << cloud_base_path << i<<".png";
+        cv::imwrite(ss.str().c_str(),img);
     }
+    
 
 
     return (0);
