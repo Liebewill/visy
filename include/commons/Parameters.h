@@ -16,15 +16,15 @@ namespace visy {
         Parameters(int argc, char** argv);
         virtual ~Parameters();
         template<typename T> void readValue(std::string name);
-        void putString(std::string name);
-        void putFloat(std::string name,float default_value = 0.0f);
+        void putString(std::string name, std::string default_value = "");
+        void putFloat(std::string name, float default_value = 0.0f);
         void putInt(std::string name);
         void putBool(std::string name);
         std::string getString(std::string name);
         float getFloat(std::string name);
         int getInt(std::string name);
         bool getBool(std::string name);
-        static std::vector<float> parseFloatArray(std::string s,std::string delimiter = ";");
+        static std::vector<float> parseFloatArray(std::string s, std::string delimiter = ";");
     private:
         int argc;
         char** argv;
@@ -32,7 +32,7 @@ namespace visy {
         std::map<std::string, float> floats;
         std::map<std::string, int> ints;
         std::map<std::string, bool> bools;
-        
+
     };
 }
 #endif	/* PARAMETERS_H */

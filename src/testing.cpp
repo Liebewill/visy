@@ -14,6 +14,7 @@
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/surface/gp3.h>
 #include <pcl/filters/fast_bilateral.h>
+#include <pcl/common/io.h>
 
 #include <pcl/kdtree/kdtree_flann.h>
 //#include <pcl/surface/mls.h>
@@ -149,13 +150,13 @@ pcl::PointCloud<PointType>::Ptr full_cloud(new pcl::PointCloud<PointType>());
 typedef pcl::PointNormal XYZNormalType;
 
 
-std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/Cups_Refined/";
+std::string cloud_base_path = "/home/daniele/Desktop/TSDF_Dataset/";
 
 void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4f& t) {
 
     pcl::PointCloud<PointType>::Ptr cloud_raw(new pcl::PointCloud<PointType>());
     std::stringstream ss;
-    ss << cloud_base_path;
+    ss << cloud_base_path << parameters->getString("dataset") << "/";
     ss << index << ".pcd";
     if (pcl::io::loadPCDFile<PointType> (ss.str().c_str(), *cloud_raw) == -1) //* load the file
     {
@@ -179,7 +180,7 @@ void loadCloud(int index, pcl::PointCloud<PointType>::Ptr& cloud, Eigen::Matrix4
     std::cout << "Points Loaded: " << cloud->points.size() << std::endl;
     //LOAD MATRIX
     ss.str("");
-    ss << cloud_base_path;
+    ss << cloud_base_path << parameters->getString("dataset") << "/";
     ss << index << ".txt";
     ifstream myReadFile;
     std::cout << "Opening: " << ss.str().c_str() << std::endl;
@@ -485,7 +486,7 @@ void buildClusters(
     tree2->setInputCloud(cloud);
 
     boost::posix_time::ptime time_start(boost::posix_time::microsec_clock::local_time());
-    
+
     pcl::EuclideanClusterExtraction<PointType> ec;
     ec.setClusterTolerance(0.01); // 1cm
     ec.setMinClusterSize(parameters->getFloat("cluster_min"));
@@ -493,10 +494,10 @@ void buildClusters(
     ec.setSearchMethod(tree2);
     ec.setInputCloud(cloud);
     ec.extract(cluster_indices);
-    
+
     boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
     boost::posix_time::time_duration duration(time_end - time_start);
-    std::cout << "Segmentation time: "<<duration<<std::endl;
+    std::cout << "Segmentation time: " << duration << std::endl;
 }
 
 void buildMesh(pcl::PointCloud<PointType>::Ptr& cloud, pcl::PolygonMesh& triangles) {
@@ -743,9 +744,9 @@ void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
 
             boost::posix_time::ptime time_end(boost::posix_time::microsec_clock::local_time());
             boost::posix_time::time_duration duration(time_end - time_start);
-            
-            std::cout << "Grasp time: "<<duration<<std::endl;
-            
+
+            std::cout << "Grasp time: " << duration << std::endl;
+
             int index = -1;
             float max_mag = 2222220.0f;
             for (int i = 0; i < grasps.size(); i++) {
@@ -801,6 +802,7 @@ int
 main(int argc, char** argv) {
     /** PARAMETERS */
     parameters = new visy::Parameters(argc, argv);
+    parameters->putString("dataset", "Triangle");
     parameters->putFloat("max_views", 49);
     parameters->putFloat("sigma");
     parameters->putFloat("step");
@@ -819,7 +821,8 @@ main(int argc, char** argv) {
     parameters->putFloat("lvl_offset", 1.0f);
     parameters->putFloat("planes_inliers", 5000);
     parameters->putFloat("cluster_min", 100);
-
+    
+    
     /* VIEWER */
     viewer = new pcl::visualization::PCLVisualizer("Bunch Tester Viewer");
     viewer->registerKeyboardCallback(keyboardEventOccurred, (void*) &viewer);
@@ -873,28 +876,46 @@ main(int argc, char** argv) {
     //    }
 
 
-    //    for (int index = 0; index <= 166; index += 10 ) {
-    //        pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
-    //        pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
-    //        Eigen::Matrix4f t;
-    //        loadCloud(index, cloud, t);
+    for (int index = 0; index <= parameters->getFloat("max_views"); index += parameters->getFloat("step")) {
+
+        pcl::PointCloud<PointType>::Ptr cloud(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<PointType>::Ptr cloud_trans(new pcl::PointCloud<PointType>());
+        Eigen::Matrix4f t;
+        loadCloud(index, cloud, t);
+        //
+        pcl::transformPointCloud(*cloud, *cloud_trans, t);
+        Eigen::Vector3f pov(t(0, 3), t(1, 3), t(2, 3));
+        //
+        time_start = boost::posix_time::microsec_clock::local_time();
+        //
+        std::cout << "Cloud trans: " << cloud_trans->points.size() << std::endl;
+        voxy->addPointCloud(cloud_trans, pov);
+        //
+        time_end = boost::posix_time::microsec_clock::local_time();
+        duration = time_end - time_start;
+        std::cout << "Voxy update time: " << duration << std::endl;
+        //
+    }
+    pcl::PointCloud<PointType>::Ptr cloud_isosurface(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr cloud_isosurface_reduced(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr cloud_isosurface_filtered(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointNormalType>::Ptr cloud_isosurface_normals(new pcl::PointCloud<PointNormalType>());
     //
-    //        pcl::transformPointCloud(*cloud, *cloud_trans, t);
-    //        Eigen::Vector3f pov(t(0, 3), t(1, 3), t(2, 3));
-    //
-    //        time_start = boost::posix_time::microsec_clock::local_time();
-    //
-    //        std::cout << "Cloud trans: " << cloud_trans->points.size() << std::endl;
-    //        voxy->addPointCloud(cloud_trans, pov);
-    //
-    //        time_end = boost::posix_time::microsec_clock::local_time();
-    //        duration = time_end - time_start;
-    //        std::cout << "Voxy update time: " << duration << std::endl;
-    //
-    //    }
-    //    pcl::PointCloud<PointType>::Ptr cloud_isosurface(new pcl::PointCloud<PointType>());
-    //
-    //    voxy->voxelToCloudZeroCrossing(cloud_isosurface);
+    voxy->voxelToCloudZeroCrossing(cloud_isosurface);
+    reduceCloud(cloud_isosurface, cloud_isosurface_reduced, 0.005);
+    filterCloudMLS(cloud_isosurface_reduced, cloud_isosurface_filtered, 0.02);
+    computeNormals(cloud_isosurface_filtered, cloud_isosurface_normals);
+
+
+    pcl::PolygonMesh triangles;
+
+    buildMesh(cloud_isosurface_filtered, triangles);
+    viewer->addPolygonMesh(triangles, "mesh");
+    Eigen::Vector3i color;
+    color << 125, 125, 125;
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color(0) / 255.0, color(1) / 255.0, color(2) / 255.0, "mesg");
+
+
     //
     //    showCloud(cloud_isosurface, 255, 255, 255, 1, "isosurface");
 
@@ -904,10 +925,45 @@ main(int argc, char** argv) {
     //    nextRound();
 
 
-    while (!viewer->wasStopped()) {
-        viewer->spinOnce();
-    }
+//    while (!viewer->wasStopped()) {
+//        viewer->spinOnce();
+//    }
 
+    
+    cloud_isosurface->height = 1;
+    cloud_isosurface->width = cloud_isosurface->points.size();
+    
+    cloud_isosurface_reduced->height = 1;
+    cloud_isosurface_reduced->width = cloud_isosurface_reduced->points.size();
+    
+    cloud_isosurface_filtered->height = 1;
+    cloud_isosurface_filtered->width = cloud_isosurface_filtered->points.size();
+    
+    float views = parameters->getFloat("max_views");
+    float perc = views / parameters->getFloat("step");
+
+    std::stringstream ss;
+    ss <<"output/"<< parameters->getString("dataset") << "_views-" << views <<"_step-"<<parameters->getFloat("step")<<"_sigma-"<<parameters->getFloat("sigma");
+    
+    std::string file_name = ss.str();
+
+    ss.str("");
+    ss << file_name << ".pcd";
+    pcl::io::savePCDFile(ss.str(), *cloud_isosurface);
+
+    ss.str("");
+    ss << file_name << "_reduced.pcd";
+    pcl::io::savePCDFile(ss.str(), *cloud_isosurface_reduced);
+
+    ss.str("");
+    ss << file_name << "_filtered.pcd";
+    pcl::io::savePCDFile(ss.str(), *cloud_isosurface_filtered);
+
+    ss.str("");
+    ss << file_name << "_mesh.ply";
+    pcl::io::savePLYFile(ss.str(), triangles);
+
+    /**
 
     pcl::PointCloud<PointType>::Ptr cloud_vox(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr cloud_down(new pcl::PointCloud<PointType>());
@@ -942,6 +998,7 @@ main(int argc, char** argv) {
         ss << "/home/daniele/Desktop/raw_cluster_" << i << ".pcd";
         pcl::io::savePCDFile(ss.str(), *(current_clusters[i]));
     }
+     */
 
     return (0);
 }
